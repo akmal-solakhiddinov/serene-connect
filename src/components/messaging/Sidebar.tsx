@@ -10,10 +10,11 @@ import type { Conversation } from '@/data/mockData';
 interface SidebarProps {
   activeConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
+  onOpenProfile?: () => void;
   className?: string;
 }
 
-export const Sidebar = ({ activeConversation, onSelectConversation, className }: SidebarProps) => {
+export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfile, className }: SidebarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredConversations = conversations.filter(conv =>
@@ -28,13 +29,18 @@ export const Sidebar = ({ activeConversation, onSelectConversation, className }:
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-border glass">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onOpenProfile}
+            className="flex items-center gap-3 p-1 -m-1 rounded-xl hover:bg-secondary/50 transition-colors"
+          >
             <Avatar src={currentUser.avatar} alt={currentUser.name} size="md" online={true} />
-            <div>
+            <div className="text-left">
               <h1 className="font-bold text-foreground">Messages</h1>
               <p className="text-xs text-muted-foreground">12 conversations</p>
             </div>
-          </div>
+          </motion.button>
           <div className="flex items-center gap-1">
             <motion.button
               whileHover={{ scale: 1.05 }}
