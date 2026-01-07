@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Settings, Edit } from 'lucide-react';
+import { Search, LogOut, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
 import { ConversationItem } from './ConversationItem';
 import { conversations, currentUser } from '@/data/mockData';
 import type { Conversation } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   activeConversation: Conversation | null;
@@ -16,6 +17,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfile, className }: SidebarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { logout } = useAuth();
 
   const filteredConversations = conversations.filter(conv =>
     conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -52,9 +54,11 @@ export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfil
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors"
+              onClick={logout}
+              className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+              title="Sign out"
             >
-              <Settings className="w-5 h-5 text-muted-foreground" />
+              <LogOut className="w-5 h-5 text-muted-foreground hover:text-destructive" />
             </motion.button>
           </div>
         </div>
