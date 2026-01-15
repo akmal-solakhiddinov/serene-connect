@@ -1,12 +1,12 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, LogOut, Edit } from 'lucide-react';
+import { Search, LogOut, Edit, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
 import { ConversationItem } from './ConversationItem';
 import { conversations, currentUser } from '@/data/mockData';
 import type { Conversation } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserSearch } from '@/hooks/useUserSearch';
 
 interface SidebarProps {
   activeConversation: Conversation | null;
@@ -16,12 +16,15 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfile, className }: SidebarProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const { logout } = useAuth();
+  const { query, setQuery, results, isLoading } = useUserSearch();
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // When searching, show search results; otherwise show all conversations
+  const displayConversations = query.trim() 
+    ? results
+        .filter(r => r.conversation)
+        .map(r => r.conversation!)
+    : conversations;
 
   return (
     <div className={cn(
@@ -40,7 +43,7 @@ export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfil
             <Avatar src={currentUser.avatar} alt={currentUser.name} size="md" online={true} />
             <div className="text-left">
               <h1 className="font-bold text-foreground">Messages</h1>
-              <p className="text-xs text-muted-foreground">12 conversations</p>
+              <p className="text-xs text-muted-foreground">{conversations.length} conversations</p>
             </div>
           </motion.button>
           <div className="flex items-center gap-1">
@@ -65,12 +68,16 @@ export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfil
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          {isLoading ? (
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
+          ) : (
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          )}
           <input
             type="text"
-            placeholder="Search conversations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search users or messages..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-secondary/50 border-0 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
           />
         </div>
@@ -78,21 +85,42 @@ export const Sidebar = ({ activeConversation, onSelectConversation, onOpenProfil
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-2">
+        {query.trim() && results.length === 0 && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Search className="w-8 h-8 text-muted-foreground/50 mb-2" />
+            <p className="text-sm text-muted-foreground">No users found</p>
+            <p className="text-xs text-muted-foreground/70">Try a different search term</p>
+          </div>
+        )}
+        
+        {query.trim() && isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          </div>
+        )}
+
         <div className="space-y-1">
-          {filteredConversations.map((conversation, index) => (
-            <motion.div
-              key={conversation.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <ConversationItem
-                conversation={conversation}
-                isActive={activeConversation?.id === conversation.id}
-                onClick={() => onSelectConversation(conversation)}
-              />
-            </motion.div>
-          ))}
+          {!isLoading && displayConversations.map((conversation, index) => {
+            const searchResult = query.trim() 
+              ? results.find(r => r.conversation?.id === conversation.id)
+              : null;
+            
+            return (
+              <motion.div
+                key={conversation.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <ConversationItem
+                  conversation={conversation}
+                  isActive={activeConversation?.id === conversation.id}
+                  onClick={() => onSelectConversation(conversation)}
+                  highlightText={searchResult?.matchType === 'message' ? searchResult.matchedText : undefined}
+                />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -7,10 +7,14 @@ interface ConversationItemProps {
   conversation: Conversation;
   isActive: boolean;
   onClick: () => void;
+  highlightText?: string;
 }
 
-export const ConversationItem = ({ conversation, isActive, onClick }: ConversationItemProps) => {
+export const ConversationItem = ({ conversation, isActive, onClick, highlightText }: ConversationItemProps) => {
   const { user, lastMessage, lastMessageTime, unreadCount } = conversation;
+
+  // Show highlighted text if it's from a message search, otherwise show last message
+  const displayMessage = highlightText || lastMessage;
 
   return (
     <motion.button
@@ -44,9 +48,11 @@ export const ConversationItem = ({ conversation, isActive, onClick }: Conversati
         <div className="flex items-center justify-between gap-2 mt-0.5">
           <p className={cn(
             'text-sm truncate',
-            unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
+            unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
+            highlightText && 'text-primary/80 italic'
           )}>
-            {lastMessage}
+            {highlightText && <span className="text-muted-foreground not-italic">Found: </span>}
+            {displayMessage}
           </p>
           
           {unreadCount > 0 && (
