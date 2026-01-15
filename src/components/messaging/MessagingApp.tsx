@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { ChatArea } from './ChatArea';
 import { ProfilePage } from './ProfilePage';
-import { conversations, type Conversation } from '@/data/mockData';
+import { conversations, type Conversation, type User } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 
 export const MessagingApp = () => {
@@ -37,6 +37,21 @@ export const MessagingApp = () => {
     navigate(`/chat/${conversation.id}`);
   };
 
+  const handleStartNewConversation = (user: User) => {
+    // Create a new temporary conversation
+    const newConversation: Conversation = {
+      id: `new-${user.id}`,
+      user,
+      lastMessage: '',
+      lastMessageTime: 'Now',
+      unreadCount: 0,
+      messages: [],
+    };
+    setActiveConversation(newConversation);
+    setShowChat(true);
+    setShowProfile(false);
+  };
+
   const handleBack = () => {
     navigate('/');
   };
@@ -66,6 +81,7 @@ export const MessagingApp = () => {
           <Sidebar
             activeConversation={activeConversation}
             onSelectConversation={handleSelectConversation}
+            onStartNewConversation={handleStartNewConversation}
             onOpenProfile={handleOpenProfile}
           />
         </div>
