@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { conversations, type Conversation, type User } from '@/data/mockData';
+import { allUsers, conversations, type Conversation, type User } from '@/data/mockData';
 
-interface SearchResult {
+export interface UserSearchResult {
   user: User;
   conversation?: Conversation;
-  matchType: 'name' | 'message';
-  matchedText?: string;
+  hasExistingConversation: boolean;
 }
 
 interface UseUserSearchResult {
-  results: SearchResult[];
+  results: UserSearchResult[];
   isLoading: boolean;
   query: string;
   setQuery: (query: string) => void;
@@ -18,47 +17,29 @@ interface UseUserSearchResult {
 // Simulated API delay for realistic feel
 const SEARCH_DELAY = 300;
 
-// Get all unique users from conversations
-const allUsers = conversations.map(conv => ({
-  user: conv.user,
-  conversation: conv,
-}));
+// Get conversation by user ID
+const getConversationByUserId = (userId: string): Conversation | undefined => {
+  return conversations.find(conv => conv.user.id === userId);
+};
 
-// Search function that mimics API behavior
-const searchUsers = (query: string): SearchResult[] => {
+// Search all users in the system
+const searchUsers = (query: string): UserSearchResult[] => {
   if (!query.trim()) {
     return [];
   }
 
   const normalizedQuery = query.toLowerCase().trim();
-  const results: SearchResult[] = [];
+  const results: UserSearchResult[] = [];
 
-  // Search by user name
-  allUsers.forEach(({ user, conversation }) => {
+  // Search through all users
+  allUsers.forEach(user => {
     if (user.name.toLowerCase().includes(normalizedQuery)) {
+      const conversation = getConversationByUserId(user.id);
       results.push({
         user,
         conversation,
-        matchType: 'name',
+        hasExistingConversation: !!conversation,
       });
-    }
-  });
-
-  // Search by message content (if not already found by name)
-  conversations.forEach(conv => {
-    const alreadyFound = results.some(r => r.user.id === conv.user.id);
-    if (!alreadyFound) {
-      const matchingMessage = conv.messages.find(msg =>
-        msg.content.toLowerCase().includes(normalizedQuery)
-      );
-      if (matchingMessage) {
-        results.push({
-          user: conv.user,
-          conversation: conv,
-          matchType: 'message',
-          matchedText: matchingMessage.content,
-        });
-      }
     }
   });
 
@@ -91,14 +72,12 @@ export const useUserSearch = (): UseUserSearchResult => {
     if (!debouncedQuery) {
       return [];
     }
-    const searchResults = searchUsers(debouncedQuery);
-    return searchResults;
+    return searchUsers(debouncedQuery);
   }, [debouncedQuery]);
 
   // Set loading to false after results are computed
   useEffect(() => {
     if (debouncedQuery) {
-      // Simulate additional API processing time
       const timer = setTimeout(() => {
         setIsLoading(false);
       }, 100);
