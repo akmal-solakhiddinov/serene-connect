@@ -1,26 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { ChatArea } from './ChatArea';
 import { ProfilePage } from './ProfilePage';
-import type { Conversation } from '@/data/mockData';
+import { conversations, type Conversation } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 
 export const MessagingApp = () => {
+  const { conversationId } = useParams<{ conversationId: string }>();
+  const navigate = useNavigate();
+  
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
+  // Sync URL param with active conversation
+  useEffect(() => {
+    if (conversationId) {
+      const conversation = conversations.find(c => c.id === conversationId);
+      if (conversation) {
+        setActiveConversation(conversation);
+        setShowChat(true);
+        setShowProfile(false);
+      } else {
+        // Invalid conversation ID, redirect to home
+        navigate('/', { replace: true });
+      }
+    } else {
+      setActiveConversation(null);
+      setShowChat(false);
+    }
+  }, [conversationId, navigate]);
+
   const handleSelectConversation = (conversation: Conversation) => {
-    setActiveConversation(conversation);
-    setShowChat(true);
-    setShowProfile(false);
+    navigate(`/chat/${conversation.id}`);
   };
 
   const handleBack = () => {
-    setShowChat(false);
-    setShowProfile(false);
-    setTimeout(() => setActiveConversation(null), 300);
+    navigate('/');
   };
 
   const handleOpenProfile = () => {
@@ -30,6 +48,9 @@ export const MessagingApp = () => {
 
   const handleCloseProfile = () => {
     setShowProfile(false);
+    if (conversationId) {
+      setShowChat(true);
+    }
   };
 
   return (
