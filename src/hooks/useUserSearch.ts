@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { api } from '@/http/axios';
-import { type Conversation, type User } from '@/data/mockData';
+import { useState, useEffect } from "react";
+import { api } from "@/http/axios";
+import { type Conversation, type User } from "@/data/mockData";
 
 export interface UserSearchResult {
   user: User;
@@ -18,7 +18,7 @@ interface UseUserSearchResult {
 const SEARCH_DELAY = 300;
 
 export const useUserSearch = (): UseUserSearchResult => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,12 +33,12 @@ export const useUserSearch = (): UseUserSearchResult => {
     const timer = setTimeout(async () => {
       try {
         // Call your backend API here
-        const response = await api.get<UserSearchResult[]>('/users/search', {
-          params: { q: query }
+        const response = await api.post<UserSearchResult[]>("/user/search", {
+          params: { query },
         });
         setResults(response);
       } catch (error) {
-        console.error('Search failed:', error);
+        console.error("Search failed:", error);
         setResults([]);
       } finally {
         setIsLoading(false);
