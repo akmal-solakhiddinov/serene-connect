@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
 import { ConversationItem } from './ConversationItem';
 import { UserSearchResult } from './UserSearchResult';
-import { conversations, currentUser, type Conversation, type User } from '@/data/mockData';
+import { currentUser, type Conversation, type User } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserSearch } from '@/hooks/useUserSearch';
+import { useConversations } from '@/hooks/useConversations';
 
 interface SidebarProps {
   activeConversation: Conversation | null;
@@ -24,7 +25,8 @@ export const Sidebar = ({
   className 
 }: SidebarProps) => {
   const { logout } = useAuth();
-  const { query, setQuery, results, isLoading } = useUserSearch();
+  const { query, setQuery, results, isLoading: isSearchLoading } = useUserSearch();
+  const { conversations, isLoading: isConversationsLoading } = useConversations();
 
   const handleSelectUser = (user: User, conversation?: Conversation) => {
     if (conversation) {
@@ -79,7 +81,7 @@ export const Sidebar = ({
 
         {/* Search */}
         <div className="relative">
-          {isLoading ? (
+          {isSearchLoading ? (
             <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
           ) : (
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -99,13 +101,13 @@ export const Sidebar = ({
         {/* Search Results */}
         {isSearching && (
           <>
-            {isLoading && (
+            {isSearchLoading && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 text-primary animate-spin" />
               </div>
             )}
 
-            {!isLoading && results.length === 0 && (
+            {!isSearchLoading && results.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Users className="w-8 h-8 text-muted-foreground/50 mb-2" />
                 <p className="text-sm text-muted-foreground">No users found</p>
@@ -113,7 +115,7 @@ export const Sidebar = ({
               </div>
             )}
 
-            {!isLoading && results.length > 0 && (
+            {!isSearchLoading && results.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground px-2 py-1">
                   Found {results.length} user{results.length !== 1 ? 's' : ''}
@@ -141,20 +143,32 @@ export const Sidebar = ({
         {/* Conversation List (when not searching) */}
         {!isSearching && (
           <div className="space-y-1">
-            {conversations.map((conversation, index) => (
-              <motion.div
-                key={conversation.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <ConversationItem
-                  conversation={conversation}
-                  isActive={activeConversation?.id === conversation.id}
-                  onClick={() => onSelectConversation(conversation)}
-                />
-              </motion.div>
-            ))}
+            {isConversationsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Users className="w-8 h-8 text-muted-foreground/50 mb-2" />
+                <p className="text-sm text-muted-foreground">No conversations yet</p>
+                <p className="text-xs text-muted-foreground/70">Search for users to start chatting</p>
+              </div>
+            ) : (
+              conversations.map((conversation, index) => (
+                <motion.div
+                  key={conversation.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <ConversationItem
+                    conversation={conversation}
+                    isActive={activeConversation?.id === conversation.id}
+                    onClick={() => onSelectConversation(conversation)}
+                  />
+                </motion.div>
+              ))
+            )}
           </div>
         )}
       </div>
