@@ -2,12 +2,13 @@ import axios, {
   AxiosInstance,
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
+  AxiosError,
 } from "axios";
 
 // Queue for failed requests during token refresh
 interface QueueItem {
-  resolve: (value?: any) => void;
-  reject: (error?: any) => void;
+  resolve: () => void;
+  reject: (error: unknown) => void;
 }
 
 // Base configuration
@@ -24,7 +25,7 @@ const axiosInstance: AxiosInstance = axios.create({
 let isRefreshing = false;
 let failedQueue: QueueItem[] = [];
 
-const processQueue = (error: any = null): void => {
+const processQueue = (error: unknown = null): void => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -38,11 +39,9 @@ const processQueue = (error: any = null): void => {
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Cookies are automatically sent with withCredentials: true
-    // No need to manually add Authorization header
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   },
 );
@@ -52,20 +51,21 @@ axiosInstance.interceptors.response.use(
   (response) => {
     return response.data;
   },
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // Handle 401 Unauthorized
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // If already refreshing, queue this request
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then(() => {
             return axiosInstance(originalRequest);
           })
-          .catch((err) => {
+          .catch((err: unknown) => {
             return Promise.reject(err);
           });
       }
@@ -74,24 +74,15 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
         await axiosInstance.post("/auth/refresh");
-
-        // Refresh successful, process queued requests
         processQueue();
         isRefreshing = false;
-
-        // Retry original request
         return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, logout user
+      } catch (refreshError: unknown) {
         processQueue(refreshError);
         isRefreshing = false;
 
-        // Clear auth state and redirect to login
         window.dispatchEvent(new CustomEvent("auth:logout"));
-
-        // Only redirect if not already on login page
         if (!window.location.pathname.includes("/auth")) {
           window.location.href = "/auth";
         }
@@ -102,7 +93,8 @@ axiosInstance.interceptors.response.use(
 
     // Handle other errors
     if (error.response) {
-      const { status, data } = error.response;
+      const status = error.response.status;
+      const data = error.response.data as { message?: string; error?: string };
 
       switch (status) {
         case 403:
@@ -129,45 +121,42 @@ axiosInstance.interceptors.response.use(
 
 // API methods with TypeScript types
 export const api = {
-  // GET request
-  get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> => {
     return axiosInstance.get(url, config);
   },
 
-  // POST request
-  post: <T = any>(
+  post: <T = unknown>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig,
   ): Promise<T> => {
     return axiosInstance.post(url, data, config);
   },
 
-  // PUT request
-  put: <T = any>(
+  put: <T = unknown>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig,
   ): Promise<T> => {
     return axiosInstance.put(url, data, config);
   },
 
-  // PATCH request
-  patch: <T = any>(
+  patch: <T = unknown>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig,
   ): Promise<T> => {
     return axiosInstance.patch(url, data, config);
   },
 
-  // DELETE request
-  delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+  delete: <T = unknown>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<T> => {
     return axiosInstance.delete(url, config);
   },
 
-  // Upload file
-  uploadFile: <T = any>(
+  uploadFile: <T = unknown>(
     url: string,
     file: File,
     onProgress?: (progress: number) => void,
@@ -189,26 +178,6 @@ export const api = {
       },
     });
   },
-
-  /*
-   
-     // Download file
-    downloadFile: async (url: string, filename: string): Promise<void> => {
-      const response = await axiosInstance.get(url, {
-        responseType: "blob",
-      });
-  
-      const urlBlob = window.URL.createObjectURL(new Blob([response]));
-      const link = document.createElement("a");
-      link.href = urlBlob;
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(urlBlob);
-    },
-   
-   * */
 };
 
 export default axiosInstance;
