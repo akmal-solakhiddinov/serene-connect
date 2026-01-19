@@ -1,9 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Loader2 } from 'lucide-react';
 import { ChatHeader } from './ChatHeader';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
+import { useMessages } from '@/hooks/useMessages';
+import { api } from '@/http/axios';
 import type { Conversation, Message } from '@/data/mockData';
 
 interface ChatAreaProps {
@@ -13,40 +15,45 @@ interface ChatAreaProps {
 
 export const ChatArea = ({ conversation, onBack }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-
-  useEffect(() => {
-    if (conversation) {
-      setMessages(conversation.messages);
-    }
-  }, [conversation]);
+  const { messages, isLoading, addMessage, updateMessage } = useMessages(conversation?.id || null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
+    const tempId = `temp_${Date.now()}`;
     const newMessage: Message = {
-      id: `m${Date.now()}`,
+      id: tempId,
       senderId: 'current',
       content,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'sent',
     };
-    setMessages(prev => [...prev, newMessage]);
+    
+    // Optimistically add message
+    addMessage(newMessage);
 
-    // Simulate message status updates
-    setTimeout(() => {
-      setMessages(prev =>
-        prev.map(m => m.id === newMessage.id ? { ...m, status: 'delivered' } : m)
-      );
-    }, 1000);
+    try {
+      // Send to API
+      const response = await api.post<{ message: Message }>(`/conversations/${conversation?.id}/messages`, {
+        content,
+      });
+      
+      // Update with real message data from server
+      updateMessage(tempId, { 
+        id: response.message.id, 
+        status: 'delivered' 
+      });
 
-    setTimeout(() => {
-      setMessages(prev =>
-        prev.map(m => m.id === newMessage.id ? { ...m, status: 'read' } : m)
-      );
-    }, 2500);
+      // Simulate read status after delay
+      setTimeout(() => {
+        updateMessage(response.message.id, { status: 'read' });
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      updateMessage(tempId, { status: 'sent' }); // Keep as sent on error
+    }
   };
 
   if (!conversation) {
@@ -82,13 +89,23 @@ export const ChatArea = ({ conversation, onBack }: ChatAreaProps) => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3 bg-gradient-to-b from-secondary/20 to-background">
-          {messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwn={message.senderId === 'current'}
-            />
-          ))}
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+              No messages yet. Start the conversation!
+            </div>
+          ) : (
+            messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={message.senderId === 'current'}
+              />
+            ))
+          )}
           <div ref={messagesEndRef} />
         </div>
 
