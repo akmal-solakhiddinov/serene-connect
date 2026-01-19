@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { api } from "../http/axios";
 
 interface User {
   id: string;
@@ -9,96 +16,145 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ error?: string }>;
-  logout: () => void;
+  register: (
+    email: string,
+    password: string,
+    name: string,
+  ) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
+  checkAuthStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_KEY = 'messaging_app_users';
-const SESSION_KEY = 'messaging_app_session';
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-      try {
-        setUser(JSON.parse(session));
-      } catch {
-        localStorage.removeItem(SESSION_KEY);
-      }
-    }
-    setIsLoading(false);
+    // Check authentication status on mount
+    checkAuthStatus();
+
+    // Listen for logout events from axios interceptor
+    const handleLogout = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener("auth:logout", handleLogout);
+
+    return () => {
+      window.removeEventListener("auth:logout", handleLogout);
+    };
   }, []);
 
-  const getUsers = (): Record<string, { password: string; name: string }> => {
+  const checkAuthStatus = async (): Promise<void> => {
     try {
-      return JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
-    } catch {
+      setIsLoading(true);
+      // Call backend endpoint to verify authentication via cookies
+      const userData = await api.get("/user/me");
+      setUser(userData);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<{ error?: string }> => {
+    try {
+      // Backend will set HTTP-only cookies
+      const response = await api.post("/auth/login", {
+        email: email.toLowerCase(),
+        password,
+      });
+
+      const loggedInUser: User = {
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+      };
+
+      setUser(loggedInUser);
+      setIsAuthenticated(true);
       return {};
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Login failed. Please try again.";
+      return { error: errorMessage };
     }
   };
 
-  const login = async (email: string, password: string): Promise<{ error?: string }> => {
-    const users = getUsers();
-    const userRecord = users[email.toLowerCase()];
-    
-    if (!userRecord) {
-      return { error: 'No account found with this email' };
-    }
-    
-    if (userRecord.password !== password) {
-      return { error: 'Incorrect password' };
-    }
+  const register = async (
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<{ error?: string }> => {
+    try {
+      // Validate password length on frontend
+      if (password.length < 6) {
+        return { error: "Password must be at least 6 characters" };
+      }
 
-    const loggedInUser: User = {
-      id: email.toLowerCase(),
-      email: email.toLowerCase(),
-      name: userRecord.name,
-    };
+      // Backend will set HTTP-only cookies
+      const response = await api.post("/auth/register", {
+        email: email.toLowerCase(),
+        password,
+        name,
+      });
 
-    setUser(loggedInUser);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(loggedInUser));
-    return {};
+      const newUser: User = {
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+      };
+
+      setUser(newUser);
+      setIsAuthenticated(true);
+      return {};
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Registration failed. Please try again.";
+      return { error: errorMessage };
+    }
   };
 
-  const register = async (email: string, password: string, name: string): Promise<{ error?: string }> => {
-    const users = getUsers();
-    const emailLower = email.toLowerCase();
-    
-    if (users[emailLower]) {
-      return { error: 'An account with this email already exists' };
+  const logout = async (): Promise<void> => {
+    try {
+      // Call backend to clear cookies
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
     }
-
-    if (password.length < 6) {
-      return { error: 'Password must be at least 6 characters' };
-    }
-
-    users[emailLower] = { password, name };
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-    const newUser: User = {
-      id: emailLower,
-      email: emailLower,
-      name,
-    };
-
-    setUser(newUser);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(newUser));
-    return {};
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(SESSION_KEY);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+        checkAuthStatus,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -107,7 +163,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
