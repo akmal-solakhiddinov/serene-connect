@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/http/axios';
-import type { Message } from '@/data/mockData';
+import type { Message } from '@/types';
 
 export const useMessages = (conversationId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
-import type { Conversation } from '@/data/mockData';
+import type { Conversation } from '@/types';
 
 interface ConversationItemProps {
   conversation: Conversation;

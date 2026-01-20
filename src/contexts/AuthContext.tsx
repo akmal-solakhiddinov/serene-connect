@@ -55,8 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       // Call backend endpoint to verify authentication via cookies
-      const userData = await api.get("/user/me");
-      setUser(userData);
+      const response = await api.get<{ user: User }>("/user/me");
+      setUser(response.user);
       setIsAuthenticated(true);
     } catch (error) {
       setUser(null);
@@ -72,18 +72,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<{ error?: string }> => {
     try {
       // Backend will set HTTP-only cookies
-      const response = await api.post("/auth/login", {
+      const response = await api.post<{ user: User }>("/auth/login", {
         email: email.toLowerCase(),
         password,
       });
 
-      const loggedInUser: User = {
-        id: response.user.id,
-        email: response.user.email,
-        name: response.user.name,
-      };
-
-      setUser(loggedInUser);
+      setUser(response.user);
       setIsAuthenticated(true);
       return {};
     } catch (error: any) {
@@ -107,19 +101,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Backend will set HTTP-only cookies
-      const response = await api.post("/auth/register", {
+      const response = await api.post<{ user: User }>("/auth/register", {
         email: email.toLowerCase(),
         password,
         name,
       });
 
-      const newUser: User = {
-        id: response.user.id,
-        email: response.user.email,
-        name: response.user.name,
-      };
-
-      setUser(newUser);
+      setUser(response.user);
       setIsAuthenticated(true);
       return {};
     } catch (error: any) {

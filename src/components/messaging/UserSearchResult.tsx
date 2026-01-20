@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { MessageCircle, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
-import type { User, Conversation } from '@/data/mockData';
+import type { User, Conversation } from '@/types';
 
 interface UserSearchResultProps {
   user: User;
