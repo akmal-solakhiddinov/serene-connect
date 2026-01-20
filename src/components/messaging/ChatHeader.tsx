@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Phone, Video, MoreVertical } from 'lucide-react';
 import { Avatar } from './Avatar';
-import type { User } from '@/data/mockData';
+import type { User } from '@/types';
 
 interface ChatHeaderProps {
   user: User;

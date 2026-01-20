@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/http/axios";
-import { type Conversation } from "@/data/mockData";
+import type { Conversation } from "@/types";
 
 export interface UseConversationsResult {
   conversations: Conversation[];
@@ -18,8 +18,8 @@ export const useConversations = (): UseConversationsResult => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get<Conversation[]>("/conversations");
-      setConversations(response);
+      const response = await api.get<{ conversations: Conversation[] }>("/conversations");
+      setConversations(response.conversations || []);
     } catch (err) {
       console.error("Failed to fetch conversations:", err);
       setError("Failed to load conversations");

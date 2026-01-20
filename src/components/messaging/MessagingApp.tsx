@@ -4,13 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { ChatArea } from './ChatArea';
 import { ProfilePage } from './ProfilePage';
-import { conversations, type Conversation, type User } from '@/data/mockData';
+import { useConversation } from '@/hooks/useConversation';
 import { cn } from '@/lib/utils';
+import type { Conversation, User } from '@/types';
 
 export const MessagingApp = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
   
+  const { conversation: fetchedConversation, isLoading } = useConversation(conversationId || null);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -18,22 +20,22 @@ export const MessagingApp = () => {
   // Sync URL param with active conversation
   useEffect(() => {
     if (conversationId) {
-      const conversation = conversations.find(c => c.id === conversationId);
-      if (conversation) {
-        setActiveConversation(conversation);
+      if (fetchedConversation) {
+        setActiveConversation(fetchedConversation);
         setShowChat(true);
         setShowProfile(false);
-      } else {
-        // Invalid conversation ID, redirect to home
+      } else if (!isLoading) {
+        // Invalid conversation ID and finished loading, redirect to home
         navigate('/', { replace: true });
       }
     } else {
       setActiveConversation(null);
       setShowChat(false);
     }
-  }, [conversationId, navigate]);
+  }, [conversationId, fetchedConversation, isLoading, navigate]);
 
   const handleSelectConversation = (conversation: Conversation) => {
+    setActiveConversation(conversation);
     navigate(`/chat/${conversation.id}`);
   };
 

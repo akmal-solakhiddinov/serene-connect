@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "@/http/axios";
-import { type Conversation, type User } from "@/data/mockData";
-
-export interface UserSearchResult {
-  user: User;
-  conversation?: Conversation;
-  hasExistingConversation: boolean;
-}
+import type { UserSearchResult } from "@/types";
 
 interface UseUserSearchResult {
   results: UserSearchResult[];
@@ -32,11 +26,10 @@ export const useUserSearch = (): UseUserSearchResult => {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        // Call your backend API here
-        const response = await api.post<UserSearchResult[]>("/user/search", {
-          params: { query },
+        const response = await api.get<{ results: UserSearchResult[] }>("/users/search", {
+          params: { q: query },
         });
-        setResults(response);
+        setResults(response.results || []);
       } catch (error) {
         console.error("Search failed:", error);
         setResults([]);

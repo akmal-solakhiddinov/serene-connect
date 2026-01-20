@@ -6,7 +6,7 @@ import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { useMessages } from '@/hooks/useMessages';
 import { api } from '@/http/axios';
-import type { Conversation, Message } from '@/data/mockData';
+import type { Conversation, Message, SendMessageResponse } from '@/types';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -36,7 +36,7 @@ export const ChatArea = ({ conversation, onBack }: ChatAreaProps) => {
 
     try {
       // Send to API
-      const response = await api.post<{ message: Message }>(`/conversations/${conversation?.id}/messages`, {
+      const response = await api.post<SendMessageResponse>(`/conversations/${conversation?.id}/messages`, {
         content,
       });
       

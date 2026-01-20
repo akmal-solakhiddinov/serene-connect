@@ -4,10 +4,11 @@ import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
 import { ConversationItem } from './ConversationItem';
 import { UserSearchResult } from './UserSearchResult';
-import { currentUser, type Conversation, type User } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import { useConversations } from '@/hooks/useConversations';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import type { Conversation, User } from '@/types';
 
 interface SidebarProps {
   activeConversation: Conversation | null;
@@ -25,6 +26,7 @@ export const Sidebar = ({
   className 
 }: SidebarProps) => {
   const { logout } = useAuth();
+  const { user: currentUser, isLoading: isUserLoading } = useCurrentUser();
   const { query, setQuery, results, isLoading: isSearchLoading } = useUserSearch();
   const { conversations, isLoading: isConversationsLoading } = useConversations();
 
@@ -53,7 +55,16 @@ export const Sidebar = ({
             onClick={onOpenProfile}
             className="flex items-center gap-3 p-1 -m-1 rounded-xl hover:bg-secondary/50 transition-colors"
           >
-            <Avatar src={currentUser.avatar} alt={currentUser.name} size="md" online={true} />
+            {isUserLoading ? (
+              <div className="w-10 h-10 rounded-full bg-secondary animate-pulse" />
+            ) : (
+              <Avatar 
+                src={currentUser?.avatar || ''} 
+                alt={currentUser?.name || 'User'} 
+                size="md" 
+                online={currentUser?.online ?? false} 
+              />
+            )}
             <div className="text-left">
               <h1 className="font-bold text-foreground">Messages</h1>
               <p className="text-xs text-muted-foreground">{conversations.length} conversations</p>

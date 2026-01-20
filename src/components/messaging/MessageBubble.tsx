@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Check, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Message } from '@/data/mockData';
+import type { Message } from '@/types';
 
 interface MessageBubbleProps {
   message: Message;
