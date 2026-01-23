@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils";
 import type { Conversation, User } from "@/types";
 
 export const MessagingApp = () => {
-  const { conversationId } = useParams<{ conversationId: string }>();
+  const { friendId } = useParams<{ friendId: string }>();
   const navigate = useNavigate();
 
   const { conversation: fetchedConversation, isLoading, hasFetched } = useConversation(
-    conversationId || null,
+    friendId || null,
   );
   const [activeConversation, setActiveConversation] =
     useState<Conversation | null>(null);
@@ -22,7 +22,7 @@ export const MessagingApp = () => {
 
   // Sync URL param with active conversation
   useEffect(() => {
-    if (conversationId) {
+    if (friendId) {
       if (fetchedConversation) {
         setActiveConversation(fetchedConversation);
         setShowChat(true);
@@ -35,11 +35,12 @@ export const MessagingApp = () => {
       setActiveConversation(null);
       setShowChat(false);
     }
-  }, [conversationId, fetchedConversation, hasFetched, isLoading, navigate]);
+  }, [friendId, fetchedConversation, hasFetched, isLoading, navigate]);
 
   const handleSelectConversation = (conversation: Conversation) => {
     setActiveConversation(conversation);
-    navigate(`/chat/${conversation.id}`);
+    // Backend deep-links are by friendId (other user's id)
+    navigate(`/chat/${conversation.user.id}`);
   };
 
   const handleStartNewConversation = (user: User) => {
@@ -68,7 +69,7 @@ export const MessagingApp = () => {
 
   const handleCloseProfile = () => {
     setShowProfile(false);
-    if (conversationId) {
+    if (friendId) {
       setShowChat(true);
     }
   };

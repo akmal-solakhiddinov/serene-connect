@@ -11,17 +11,17 @@ export interface UseConversationResult {
 }
 
 export const useConversation = (
-  conversationId: string | null,
+  friendId: string | null,
 ): UseConversationResult => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   // Important: when navigating directly to /chat/:id, we must not redirect
   // before the first fetch attempt finishes.
-  const [isLoading, setIsLoading] = useState<boolean>(!!conversationId);
+  const [isLoading, setIsLoading] = useState<boolean>(!!friendId);
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
 
   const fetchConversation = useCallback(async () => {
-    if (!conversationId) {
+    if (!friendId) {
       setConversation(null);
       setError(null);
       setIsLoading(false);
@@ -32,10 +32,10 @@ export const useConversation = (
     try {
       setIsLoading(true);
       setError(null);
-      // Fetch a single conversation
+      // Backend contract: GET /conversation/:friendId is get-or-create
       // Expected shape: { conversation: Conversation }
       const response = await api.get<{ conversation: Conversation }>(
-        `/conversations/${conversationId}`,
+        `/conversation/${friendId}`,
       );
       setConversation(response?.conversation ?? null);
     } catch (err) {
@@ -46,7 +46,7 @@ export const useConversation = (
       setIsLoading(false);
       setHasFetched(true);
     }
-  }, [conversationId]);
+  }, [friendId]);
 
   useEffect(() => {
     fetchConversation();
