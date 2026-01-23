@@ -18,8 +18,8 @@ export const useConversations = (): UseConversationsResult => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get<{ conversations: Conversation[] }>("/conversations");
-      setConversations(response.conversations || []);
+      const response = await api.get<Conversation[]>("/conversations");
+      setConversations(response || []);
     } catch (err) {
       console.error("Failed to fetch conversations:", err);
       setError("Failed to load conversations");

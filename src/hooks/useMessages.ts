@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/http/axios';
-import type { Message } from '@/types';
+import { useState, useEffect, useCallback } from "react";
+import { api } from "@/http/axios";
+import type { Message } from "@/types";
 
 export const useMessages = (conversationId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -17,11 +17,13 @@ export const useMessages = (conversationId: string | null) => {
     setError(null);
 
     try {
-      const response = await api.get<{ messages: Message[] }>(`/conversations/${conversationId}/messages`);
+      const response = await api.get<{ messages: Message[] }>(
+        `/messages/${conversationId}/messages`,
+      );
       setMessages(response.messages || []);
     } catch (err: any) {
-      console.error('Failed to fetch messages:', err);
-      setError(err.message || 'Failed to load messages');
+      console.error("Failed to fetch messages:", err);
+      setError(err.message || "Failed to load messages");
       setMessages([]);
     } finally {
       setIsLoading(false);
@@ -33,12 +35,12 @@ export const useMessages = (conversationId: string | null) => {
   }, [fetchMessages]);
 
   const addMessage = (message: Message) => {
-    setMessages(prev => [...prev, message]);
+    setMessages((prev) => [...prev, message]);
   };
 
   const updateMessage = (messageId: string, updates: Partial<Message>) => {
-    setMessages(prev =>
-      prev.map(m => m.id === messageId ? { ...m, ...updates } : m)
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, ...updates } : m)),
     );
   };
 

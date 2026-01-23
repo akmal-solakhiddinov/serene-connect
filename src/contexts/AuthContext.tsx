@@ -5,12 +5,19 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import axios from "axios"; // Import axios to use isAxiosError
 import { api } from "../http/axios";
 
 interface User {
   id: string;
   email: string;
   name: string;
+}
+
+// Define the shape of your backend error responses
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
 }
 
 interface AuthContextType {
@@ -35,28 +42,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check authentication status on mount
     checkAuthStatus();
 
-    // Listen for logout events from axios interceptor
     const handleLogout = () => {
       setUser(null);
       setIsAuthenticated(false);
     };
 
     window.addEventListener("auth:logout", handleLogout);
-
-    return () => {
-      window.removeEventListener("auth:logout", handleLogout);
-    };
+    return () => window.removeEventListener("auth:logout", handleLogout);
   }, []);
 
   const checkAuthStatus = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      // Call backend endpoint to verify authentication via cookies
-      const response = await api.get<{ user: User }>("/user/me");
-      setUser(response.user);
+      // 'data' is the object { user: { id: ..., name: ... } }
+      const data = await api.get<User>("/user/me");
+
+      // Set the state to the internal user object, not the wrapper
+      setUser(data);
       setIsAuthenticated(true);
     } catch (error) {
       setUser(null);
@@ -71,7 +75,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     password: string,
   ): Promise<{ error?: string }> => {
     try {
-      // Backend will set HTTP-only cookies
       const response = await api.post<{ user: User }>("/auth/login", {
         email: email.toLowerCase(),
         password,
@@ -80,11 +83,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(response.user);
       setIsAuthenticated(true);
       return {};
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Login failed. Please try again.";
+    } catch (error: unknown) {
+      let errorMessage = "Login failed. Please try again.";
+
+      // Safe type checking instead of 'any'
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          errorMessage;
+      }
+
       return { error: errorMessage };
     }
   };
@@ -95,12 +104,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     name: string,
   ): Promise<{ error?: string }> => {
     try {
-      // Validate password length on frontend
       if (password.length < 6) {
         return { error: "Password must be at least 6 characters" };
       }
 
-      // Backend will set HTTP-only cookies
       const response = await api.post<{ user: User }>("/auth/register", {
         email: email.toLowerCase(),
         password,
@@ -110,18 +117,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(response.user);
       setIsAuthenticated(true);
       return {};
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Registration failed. Please try again.";
+    } catch (error: unknown) {
+      let errorMessage = "Registration failed. Please try again.";
+
+      // Safe type checking instead of 'any'
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          errorMessage;
+      }
+
       return { error: errorMessage };
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      // Call backend to clear cookies
       await api.post("/auth/logout");
     } catch (error) {
       console.error("Logout error:", error);

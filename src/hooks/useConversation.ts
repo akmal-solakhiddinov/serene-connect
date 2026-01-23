@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/http/axios';
-import type { Conversation } from '@/types';
+import { useState, useEffect, useCallback } from "react";
+import { api } from "@/http/axios";
+import type { Conversation } from "@/types";
 
 export interface UseConversationResult {
   conversation: Conversation | null;
@@ -9,7 +9,9 @@ export interface UseConversationResult {
   refetch: () => Promise<void>;
 }
 
-export const useConversation = (conversationId: string | null): UseConversationResult => {
+export const useConversation = (
+  conversationId: string | null,
+): UseConversationResult => {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,11 +25,13 @@ export const useConversation = (conversationId: string | null): UseConversationR
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get<{ conversation: Conversation }>(`/conversations/${conversationId}`);
+      const response = await api.post<{ conversation: Conversation }>(
+        `/conversations/${conversationId}`,
+      );
       setConversation(response.conversation);
     } catch (err) {
-      console.error('Failed to fetch conversation:', err);
-      setError('Failed to load conversation');
+      console.error("Failed to fetch conversation:", err);
+      setError("Failed to load conversation");
       setConversation(null);
     } finally {
       setIsLoading(false);

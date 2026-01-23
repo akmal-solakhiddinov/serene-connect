@@ -26,10 +26,11 @@ export const useUserSearch = (): UseUserSearchResult => {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await api.get<{ results: UserSearchResult[] }>("/users/search", {
-          params: { q: query },
+        const response = await api.post<UserSearchResult[]>("/user/search", {
+          params: { query },
         });
-        setResults(response.results || []);
+
+        setResults(response || []);
       } catch (error) {
         console.error("Search failed:", error);
         setResults([]);
