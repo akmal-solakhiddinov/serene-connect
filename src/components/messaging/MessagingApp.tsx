@@ -12,7 +12,7 @@ export const MessagingApp = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
 
-  const { conversation: fetchedConversation, isLoading } = useConversation(
+  const { conversation: fetchedConversation, isLoading, hasFetched } = useConversation(
     conversationId || null,
   );
   const [activeConversation, setActiveConversation] =
@@ -27,15 +27,15 @@ export const MessagingApp = () => {
         setActiveConversation(fetchedConversation);
         setShowChat(true);
         setShowProfile(false);
-      } else if (!isLoading) {
-        // Invalid conversation ID and finished loading, redirect to home
+      } else if (hasFetched && !isLoading) {
+        // Invalid conversation ID AND first fetch attempt finished -> redirect to home
         navigate("/", { replace: true });
       }
     } else {
       setActiveConversation(null);
       setShowChat(false);
     }
-  }, [conversationId, fetchedConversation, isLoading, navigate]);
+  }, [conversationId, fetchedConversation, hasFetched, isLoading, navigate]);
 
   const handleSelectConversation = (conversation: Conversation) => {
     setActiveConversation(conversation);
