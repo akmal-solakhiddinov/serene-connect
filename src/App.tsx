@@ -29,7 +29,7 @@ const App = () => (
               }
             />
             <Route
-            path="/chat/:friendId"
+              path="/chat/:conversationId"
               element={
                 <ProtectedRoute>
                   <Index />
