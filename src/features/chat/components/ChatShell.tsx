@@ -22,7 +22,7 @@ export function ChatShell() {
   const [mobileOpenChat, setMobileOpenChat] = useState(!!conversationId);
   useEffect(() => setMobileOpenChat(!!conversationId), [conversationId]);
 
-  const conversations = data ?? [];
+  const conversations = Array.isArray(data) ? data : [];
   const active = useMemo(
     () => conversations.find((c) => c.id === conversationId) ?? null,
     [conversations, conversationId],
