@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { conversationsApi } from "@/api/conversations";
+// import { conversationsApi } from "@/api/conversations";
 import { useAuth } from "@/features/auth/AuthProvider";
 import {
   isOwnMessage,
@@ -56,7 +56,7 @@ export function ChatView({
 
   useEffect(() => {
     if (!conversationId) return;
-    conversationsApi.markRead(conversationId).catch(() => void 0);
+    // conversationsApi.markRead(conversationId).catch(() => void 0);
   }, [conversationId]);
 
   useEffect(() => {
