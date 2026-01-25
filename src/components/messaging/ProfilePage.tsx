@@ -1,7 +1,10 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Camera, Mail, Phone, MapPin, Link as LinkIcon, Calendar, MessageCircle, Image, FileText, Music, Loader2 } from 'lucide-react';
 import { Avatar } from './Avatar';
+import { FeatureNotReady } from '@/components/ui/FeatureNotReady';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { isFeatureEnabled } from '@/lib/featureFlags';
 import { cn } from '@/lib/utils';
 import type { RecentLink } from '@/types';
 
@@ -22,6 +25,12 @@ const getLinkIcon = (type: RecentLink['type']) => {
 
 export const ProfilePage = ({ onBack }: ProfilePageProps) => {
   const { profile, isLoading } = useUserProfile();
+  const [showFeatureToast, setShowFeatureToast] = useState(false);
+
+  const handleFeatureNotReady = () => {
+    setShowFeatureToast(true);
+    setTimeout(() => setShowFeatureToast(false), 3000);
+  };
 
   if (isLoading) {
     return (
@@ -44,6 +53,11 @@ export const ProfilePage = ({ onBack }: ProfilePageProps) => {
 
   return (
     <div className="h-full flex flex-col bg-background">
+      {/* Feature not ready toast */}
+      <AnimatePresence>
+        {showFeatureToast && <FeatureNotReady variant="toast" />}
+      </AnimatePresence>
+
       {/* Header with gradient background */}
       <div className="relative">
         <div className="h-32 bg-gradient-to-br from-primary/30 via-accent/20 to-primary/10" />
@@ -62,6 +76,12 @@ export const ProfilePage = ({ onBack }: ProfilePageProps) => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            if (!isFeatureEnabled("editProfile")) {
+              handleFeatureNotReady();
+              return;
+            }
+          }}
           className="absolute top-4 right-4 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-soft"
         >
           <Camera className="w-5 h-5 text-foreground" />
@@ -74,6 +94,12 @@ export const ProfilePage = ({ onBack }: ProfilePageProps) => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (!isFeatureEnabled("editProfile")) {
+                  handleFeatureNotReady();
+                  return;
+                }
+              }}
               className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground shadow-glow"
             >
               <Camera className="w-4 h-4" />
@@ -94,7 +120,7 @@ export const ProfilePage = ({ onBack }: ProfilePageProps) => {
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
             <span className={cn(
               "w-2 h-2 rounded-full",
-              profile.online ? "bg-green-500" : "bg-muted-foreground"
+              profile.online ? "bg-online" : "bg-muted-foreground"
             )} />
             {profile.online ? 'Online' : `Last seen ${profile.lastSeen || 'recently'}`}
           </p>
