@@ -58,6 +58,7 @@ export default {
         },
         online: "hsl(var(--online))",
         unread: "hsl(var(--unread))",
+        warning: "hsl(var(--warning))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

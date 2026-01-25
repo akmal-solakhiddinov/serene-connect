@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, CheckCheck, Paperclip, Send } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { FeatureNotReady } from "@/components/ui/FeatureNotReady";
 import { cn } from "@/lib/utils";
-// import { conversationsApi } from "@/api/conversations";
+import { isFeatureEnabled } from "@/lib/featureFlags";
+import { conversationsApi } from "@/api/conversations";
 import { useAuth } from "@/features/auth/AuthProvider";
 import {
   isOwnMessage,
@@ -48,6 +51,7 @@ export function ChatView({
 
   const [draft, setDraft] = useState("");
   const [windowSize, setWindowSize] = useState(40);
+  const [showFeatureToast, setShowFeatureToast] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   const all = data ?? [];
@@ -56,11 +60,10 @@ export function ChatView({
 
   useEffect(() => {
     if (!conversationId) return;
-    // conversationsApi.markRead(conversationId).catch(() => void 0);
+    conversationsApi.markRead(conversationId).catch(() => void 0);
   }, [conversationId]);
 
   useEffect(() => {
-    // Keep scroll pinned to bottom on new messages (basic)
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight });
   }, [conversationId, ordered.length]);
 
@@ -91,12 +94,56 @@ export function ChatView({
     return () => io.disconnect();
   }, [conversationId, meId, visible, seenMutation]);
 
+  const handleFeatureNotReady = () => {
+    setShowFeatureToast(true);
+    setTimeout(() => setShowFeatureToast(false), 3000);
+  };
+
   const handleSend = async () => {
     if (!conversationId) return;
     const content = draft.trim();
     if (!content) return;
     setDraft("");
     await sendMutation.mutateAsync({ content });
+  };
+
+  const handleEdit = async (m: MessageDTO) => {
+    if (!isFeatureEnabled("messageEdit")) {
+      handleFeatureNotReady();
+      return;
+    }
+    const next = window.prompt("Edit message", m.content ?? "");
+    if (!next || !next.trim()) return;
+    try {
+      await editMutation.mutateAsync({ id: m.id, content: next.trim(), conversationId: conversationId! });
+    } catch (err: any) {
+      if (err?.message === "FEATURE_NOT_READY") {
+        handleFeatureNotReady();
+      }
+    }
+  };
+
+  const handleDelete = async (m: MessageDTO) => {
+    if (!isFeatureEnabled("messageDelete")) {
+      handleFeatureNotReady();
+      return;
+    }
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await delMutation.mutateAsync({ id: m.id, conversationId: conversationId! });
+    } catch (err: any) {
+      if (err?.message === "FEATURE_NOT_READY") {
+        handleFeatureNotReady();
+      }
+    }
+  };
+
+  const handleAttachment = () => {
+    if (!isFeatureEnabled("attachments")) {
+      handleFeatureNotReady();
+      return;
+    }
+    // Future: open file picker
   };
 
   if (!conversationId) {
@@ -111,6 +158,11 @@ export function ChatView({
 
   return (
     <div className="h-full w-full flex flex-col bg-background">
+      {/* Feature not ready toast */}
+      <AnimatePresence>
+        {showFeatureToast && <FeatureNotReady variant="toast" />}
+      </AnimatePresence>
+
       <header className="h-14 flex items-center gap-2 px-2 md:px-4 bg-card border-b border-border">
         <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
@@ -189,21 +241,14 @@ export function ChatView({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={async () => {
-                            const next = window.prompt("Edit message", m.content ?? "");
-                            if (!next || !next.trim()) return;
-                            await editMutation.mutateAsync({ id: m.id, content: next.trim(), conversationId });
-                          }}
+                          onClick={() => handleEdit(m)}
                         >
                           Edit
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={async () => {
-                            if (!window.confirm("Delete this message?") ) return;
-                            await delMutation.mutateAsync({ id: m.id, conversationId });
-                          }}
+                          onClick={() => handleDelete(m)}
                         >
                           Delete
                         </Button>
@@ -221,7 +266,7 @@ export function ChatView({
 
       <footer className="p-2 md:p-3 bg-card">
         <div className="flex items-center gap-2 rounded-2xl bg-secondary/60 px-2 py-2">
-          <Button variant="ghost" size="icon" disabled>
+          <Button variant="ghost" size="icon" onClick={handleAttachment}>
             <Paperclip className="h-5 w-5 text-muted-foreground" />
           </Button>
 
@@ -247,9 +292,6 @@ export function ChatView({
             <Send className="h-5 w-5" />
           </Button>
         </div>
-        <p className="mt-2 text-[10px] text-muted-foreground">
-          Attachments are disabled in UI until file-field expectations are confirmed by backend.
-        </p>
       </footer>
     </div>
   );
