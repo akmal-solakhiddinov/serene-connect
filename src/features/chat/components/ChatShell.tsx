@@ -20,6 +20,8 @@ import type { ConversationItemDTO } from "@/types/dtos";
 import { ChatView } from "@/features/chat/components/ChatView";
 
 function displayName(c: ConversationItemDTO) {
+  console.log(Object.entries(c), "log conv");
+
   return c.user.fullName || c.user.username || c.user.email;
 }
 
@@ -108,6 +110,7 @@ export function ChatShell() {
             mobileOpenChat && "hidden md:flex",
           )}
         >
+<<<<<<< HEAD
           {/* Header */}
           <div className="flex-shrink-0 p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -156,8 +159,17 @@ export function ChatShell() {
                   <LogOut className="w-5 h-5 text-muted-foreground hover:text-destructive" />
                 </motion.button>
               </div>
+=======
+          <div className="h-14 px-3 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {me?.fullName || me?.username || me?.email}
+              </p>
+              <p className="text-xs text-muted-foreground">Messages</p>
+>>>>>>> c8e841f (sa)
             </div>
 
+<<<<<<< HEAD
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -201,10 +213,30 @@ export function ChatShell() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.05 }}
                     className="h-16 rounded-xl bg-secondary/50 animate-pulse" 
+=======
+          <div className="p-3">
+            <Input
+              placeholder="Search (not implemented: no endpoint)"
+              disabled
+            />
+          </div>
+
+          <div
+            ref={listRef}
+            className="h-[calc(100%-112px)] overflow-y-auto scrollbar-thin px-2 pb-3"
+          >
+            {isLoading ? (
+              <div className="space-y-2 px-1">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-14 rounded-xl bg-secondary animate-pulse"
+>>>>>>> c8e841f (sa)
                   />
                 ))}
               </div>
             ) : isError ? (
+<<<<<<< HEAD
               <div className="px-3 py-8 text-center">
                 <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-destructive/10 flex items-center justify-center">
                   <MessageCircle className="w-6 h-6 text-destructive" />
@@ -224,13 +256,36 @@ export function ChatShell() {
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
                   {searchQuery ? "Try a different search" : "Start a new conversation!"}
+=======
+              <div className="px-2 py-6">
+                <p className="text-sm text-muted-foreground">
+                  Failed to load conversations.
+                </p>
+                <Button
+                  className="mt-3"
+                  variant="secondary"
+                  onClick={() => refetch()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="px-2 py-6">
+                <p className="text-sm text-muted-foreground">
+                  No conversations yet.
+>>>>>>> c8e841f (sa)
                 </p>
               </div>
             ) : (
               <div className="space-y-1">
                 {filteredConversations.map((c, index) => {
                   const isActive = c.id === conversationId;
+<<<<<<< HEAD
                   const name = displayName(c);
+=======
+                  console.log(c);
+
+>>>>>>> c8e841f (sa)
                   return (
                     <motion.button
                       key={c.id}
@@ -249,6 +304,7 @@ export function ChatShell() {
                         isActive && "bg-secondary shadow-sm"
                       )}
                     >
+<<<<<<< HEAD
                       <Avatar name={name} size="sm" />
                       
                       <div className="flex-1 min-w-0 text-left">
@@ -281,6 +337,30 @@ export function ChatShell() {
                               animate={{ scale: 1 }}
                               className="flex-shrink-0 min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs font-bold text-primary-foreground bg-primary rounded-full"
                             >
+=======
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {displayName(c)}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {c.lastMessage?.content ||
+                              (c.lastMessage?.attachmentType
+                                ? c.lastMessage.attachmentType
+                                : "") ||
+                              ""}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(c.updatedAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          {c.unreadCount > 0 ? (
+                            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
+>>>>>>> c8e841f (sa)
                               {c.unreadCount}
                             </motion.span>
                           )}
@@ -295,7 +375,9 @@ export function ChatShell() {
         </aside>
 
         {/* Chat */}
-        <main className={cn("flex-1 h-full", !mobileOpenChat && "hidden md:block")}>
+        <main
+          className={cn("flex-1 h-full", !mobileOpenChat && "hidden md:block")}
+        >
           <ChatView
             conversationId={conversationId ?? null}
             onBack={() => {

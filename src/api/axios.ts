@@ -7,7 +7,11 @@ import axios, {
 
 type ToastVariant = "default" | "destructive";
 
-const emitToast = (title: string, description?: string, variant: ToastVariant = "destructive") => {
+const emitToast = (
+  title: string,
+  description?: string,
+  variant: ToastVariant = "destructive",
+) => {
   window.dispatchEvent(
     new CustomEvent("app:toast", { detail: { title, description, variant } }),
   );
@@ -19,7 +23,7 @@ interface QueueItem {
 }
 
 export const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: "http://localhost:4000/api",
   timeout: 15_000,
   headers: {
     "Content-Type": "application/json",
@@ -46,12 +50,18 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   async (error: AxiosError) => {
-    const originalRequest = error.config as (InternalAxiosRequestConfig & {
-      _retry?: boolean;
-    }) | null;
+    const originalRequest = error.config as
+      | (InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      })
+      | null;
 
     // 401 → attempt refresh then replay
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       if (isRefreshing) {
         return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -87,7 +97,11 @@ axiosInstance.interceptors.response.use(
     if (status && status !== 401) {
       emitToast("Request failed", message, "destructive");
     } else if (!status) {
-      emitToast("Network error", "No response received from server", "destructive");
+      emitToast(
+        "Network error",
+        "No response received from server",
+        "destructive",
+      );
     }
 
     return Promise.reject(error);
