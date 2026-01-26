@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/http/axios';
-import type { User } from '@/types';
+import { useState, useEffect, useCallback } from "react";
+import { api } from "@/http/axios";
+import type { User } from "@/types";
 
 export interface UseCurrentUserResult {
   user: User | null;
@@ -18,11 +18,11 @@ export const useCurrentUser = (): UseCurrentUserResult => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get<{ user: User }>('/user/me');
+      const response = await api.get<{ user: User }>("/user/me");
       setUser(response.user);
     } catch (err) {
-      console.error('Failed to fetch current user:', err);
-      setError('Failed to load user data');
+      console.error("Failed to fetch current user:", err);
+      setError("Failed to load user data");
       setUser(null);
     } finally {
       setIsLoading(false);

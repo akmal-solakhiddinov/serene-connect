@@ -35,6 +35,8 @@ import {
   useSendTextMessage,
 } from "@/features/chat/hooks/useMessages";
 import type { MessageDTO } from "@/types/dtos";
+import { useSocket } from "@/realtime/useSocket";
+import { useMessageSocket } from "@/realtime/useMessageSocket";
 
 function StatusIcon({
   status,
@@ -78,7 +80,8 @@ export function ChatView({
   const [windowSize, setWindowSize] = useState(40);
   const [showFeatureToast, setShowFeatureToast] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
-
+  const socket = useSocket();
+  useMessageSocket(conversationId);
   const ordered = useMemo(() => {
     const all = data ?? [];
     return [...all].sort(
@@ -96,6 +99,17 @@ export function ChatView({
     conversationsApi.markRead(conversationId).catch(() => void 0);
   }, [conversationId]);
 */
+
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+
+    socket.emit("conversation:join", { conversationId });
+
+    return () => {
+      socket.emit("conversation:leave");
+    };
+  }, [conversationId, socket]);
+
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight });
   }, [conversationId, ordered.length]);

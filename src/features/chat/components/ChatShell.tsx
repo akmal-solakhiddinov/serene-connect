@@ -8,7 +8,6 @@ import { SidebarHeader } from "./SidebarHeader";
 import { ConversationList } from "./ConversationList";
 import { FeatureFlagsCard } from "./FeatureFlagsCard";
 import { FeatureNotReady } from "@/components/ui/FeatureNotReady";
-import { useSocket } from "@/realtime/useSocket";
 import type { ConversationItemDTO } from "@/types/dtos";
 
 function displayName(c: ConversationItemDTO) {

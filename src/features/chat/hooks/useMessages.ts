@@ -10,33 +10,41 @@ export function useMessages(conversationId: string | null) {
     queryFn: async (): Promise<MessageDTO[]> => {
       if (!conversationId) return [];
       const result = await messagesApi.list(conversationId);
-
       return Array.isArray(result.messages) ? result.messages : [];
     },
     enabled: !!conversationId,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 
 export function useSendTextMessage(conversationId: string) {
   const socket = useSocket();
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async (payload: { content: string }) => {
-      socket.emit(
-        "message:send",
-        { ...payload, conversationId },
-        (status: boolean) => {
-          if (!status)
-            console.log(
-              "Something went wrong wile send new message via socket: ",
-              socket,
-            );
+    mutationFn: (payload: { content: string }) => {
+      return new Promise<MessageDTO>((resolve, reject) => {
+        socket.emit(
+          "message:send",
+          { ...payload, conversationId },
+          (status: boolean, msg?: MessageDTO) => {
+            if (status && msg) resolve(msg);
+            else reject(new Error("Failed to send message via socket"));
+          },
+        );
+      });
+    },
+
+    onSuccess: (message) => {
+      qc.setQueryData<MessageDTO[]>(
+        ["messages", conversationId],
+        (old = []) => {
+          if (old.some((m) => m.id === message.id)) return old;
+          return [...old, message];
         },
       );
-      return messagesApi.sendText(conversationId, payload);
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["messages", conversationId] }),
   });
 }
 
@@ -74,10 +82,19 @@ export function useDeleteMessage() {
 
 export function useMarkMessageSeen() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async (payload: { id: string; conversationId: string }) => { },
-    onSuccess: (_data, vars) =>
-      qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
+    mutationFn: async (payload: { id: string; conversationId: string }) => {
+      //return messagesApi.markSeen(payload.id);
+    },
+
+    onSuccess: (_data, vars) => {
+      qc.setQueryData<MessageDTO[]>(
+        ["messages", vars.conversationId],
+        (old = []) =>
+          old.map((m) => (m.id === vars.id ? { ...m, status: "seen" } : m)),
+      );
+    },
   });
 }
 
