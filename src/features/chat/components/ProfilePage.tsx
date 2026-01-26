@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Camera, Mail, Phone, MapPin, Link as LinkIcon, Calendar, MessageCircle, Image, FileText, Music, Loader2 } from 'lucide-react';
-import { Avatar } from './Avatar';
+import { Avatar } from '@/features/chat/components/Avatar';
 import { FeatureNotReady } from '@/components/ui/FeatureNotReady';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { isFeatureEnabled } from '@/lib/featureFlags';
@@ -90,7 +90,7 @@ export const ProfilePage = ({ onBack }: ProfilePageProps) => {
         {/* Avatar */}
         <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
           <div className="relative">
-            <Avatar src={profile.avatar} alt={profile.name} size="xl" online={profile.online} />
+            <Avatar name={profile.name} size="xl" />
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
