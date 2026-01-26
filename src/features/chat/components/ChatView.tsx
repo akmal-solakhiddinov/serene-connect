@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Check, 
-  CheckCheck, 
-  Paperclip, 
-  Send, 
-  Smile, 
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Paperclip,
+  Send,
+  Smile,
   Mic,
   MoreVertical,
   Edit3,
   Trash2,
-  MessageCircle
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -36,9 +36,16 @@ import {
 } from "@/features/chat/hooks/useMessages";
 import type { MessageDTO } from "@/types/dtos";
 
-function StatusIcon({ status, own }: { status: MessageDTO["status"]; own: boolean }) {
+function StatusIcon({
+  status,
+  own,
+}: {
+  status: MessageDTO["status"];
+  own: boolean;
+}) {
   if (!own) return null;
-  if (status === "seen") return <CheckCheck className="h-3.5 w-3.5 text-primary" />;
+  if (status === "seen")
+    return <CheckCheck className="h-3.5 w-3.5 text-primary" />;
   return <Check className="h-3.5 w-3.5 text-muted-foreground/70" />;
 }
 
@@ -72,15 +79,23 @@ export function ChatView({
   const [showFeatureToast, setShowFeatureToast] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
-  const all = data ?? [];
-  const ordered = useMemo(() => [...all].sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)), [all]);
-  const visible = useMemo(() => ordered.slice(Math.max(0, ordered.length - windowSize)), [ordered, windowSize]);
+  const ordered = useMemo(() => {
+    const all = data ?? [];
+    return [...all].sort(
+      (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
+    );
+  }, [data]);
 
-  useEffect(() => {
+  const visible = useMemo(
+    () => ordered.slice(Math.max(0, ordered.length - windowSize)),
+    [ordered, windowSize],
+  );
+
+  /*  useEffect(() => {
     if (!conversationId) return;
     conversationsApi.markRead(conversationId).catch(() => void 0);
   }, [conversationId]);
-
+*/
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight });
   }, [conversationId, ordered.length]);
@@ -95,7 +110,9 @@ export function ChatView({
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           const id = (entry.target as HTMLElement).dataset.messageId;
-          const status = (entry.target as HTMLElement).dataset.messageStatus as MessageDTO["status"] | undefined;
+          const status = (entry.target as HTMLElement).dataset.messageStatus as
+            | MessageDTO["status"]
+            | undefined;
           const senderId = (entry.target as HTMLElement).dataset.senderId;
           if (!id || !status) continue;
           if (senderId === meId) continue;
@@ -133,7 +150,11 @@ export function ChatView({
     const next = window.prompt("Edit message", m.content ?? "");
     if (!next || !next.trim()) return;
     try {
-      await editMutation.mutateAsync({ id: m.id, content: next.trim(), conversationId: conversationId! });
+      await editMutation.mutateAsync({
+        id: m.id,
+        content: next.trim(),
+        conversationId: conversationId!,
+      });
     } catch (err: any) {
       if (err?.message === "FEATURE_NOT_READY") {
         handleFeatureNotReady();
@@ -148,7 +169,10 @@ export function ChatView({
     }
     if (!window.confirm("Delete this message?")) return;
     try {
-      await delMutation.mutateAsync({ id: m.id, conversationId: conversationId! });
+      await delMutation.mutateAsync({
+        id: m.id,
+        conversationId: conversationId!,
+      });
     } catch (err: any) {
       if (err?.message === "FEATURE_NOT_READY") {
         handleFeatureNotReady();
@@ -183,7 +207,9 @@ export function ChatView({
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-glow">
             <MessageCircle className="w-10 h-10 text-primary-foreground" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to Messages</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            Welcome to Messages
+          </h2>
           <p className="text-muted-foreground text-sm max-w-xs">
             Select a conversation from the sidebar to start chatting
           </p>
@@ -201,11 +227,18 @@ export function ChatView({
 
       {/* Header */}
       <header className="h-14 flex items-center gap-2 px-2 md:px-4 bg-card/80 backdrop-blur-sm border-b border-border">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onBack}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{title || "Chat"}</p>
+          <p className="text-sm font-semibold text-foreground truncate">
+            {title || "Chat"}
+          </p>
           <p className="text-xs text-muted-foreground">
             {isLoading ? "Loading…" : visible.length > 0 ? "Online" : ""}
           </p>
@@ -228,8 +261,14 @@ export function ChatView({
       >
         {isError ? (
           <div className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">Failed to load messages.</p>
-            <Button className="mt-3" variant="secondary" onClick={() => refetch()}>
+            <p className="text-sm text-muted-foreground">
+              Failed to load messages.
+            </p>
+            <Button
+              className="mt-3"
+              variant="secondary"
+              onClick={() => refetch()}
+            >
               Retry
             </Button>
           </div>
@@ -254,7 +293,9 @@ export function ChatView({
               <MessageCircle className="w-8 h-8 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">No messages yet</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">Send a message to start the conversation!</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Send a message to start the conversation!
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -269,9 +310,17 @@ export function ChatView({
                   data-message-id={m.id}
                   data-message-status={m.status}
                   data-sender-id={m.senderId}
-                  className={cn("flex group", own ? "justify-end" : "justify-start")}
+                  className={cn(
+                    "flex group",
+                    own ? "justify-end" : "justify-start",
+                  )}
                 >
-                  <div className={cn("flex items-end gap-1 max-w-[78%]", own && "flex-row-reverse")}>
+                  <div
+                    className={cn(
+                      "flex items-end gap-1 max-w-[78%]",
+                      own && "flex-row-reverse",
+                    )}
+                  >
                     <div
                       className={cn(
                         "rounded-2xl px-4 py-2.5 shadow-sm transition-all",
@@ -281,14 +330,28 @@ export function ChatView({
                       )}
                     >
                       {m.content ? (
-                        <p className="text-sm whitespace-pre-wrap break-words">{m.content}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {m.content}
+                        </p>
                       ) : null}
                       {!m.content && m.attachmentType ? (
                         <p className="text-sm italic">[{m.attachmentType}]</p>
                       ) : null}
 
-                      <div className={cn("mt-1 flex items-center gap-1", own ? "justify-end" : "justify-start")}>
-                        <span className={cn("text-[10px]", own ? "text-bubble-sent-foreground/70" : "text-muted-foreground")}>
+                      <div
+                        className={cn(
+                          "mt-1 flex items-center gap-1",
+                          own ? "justify-end" : "justify-start",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "text-[10px]",
+                            own
+                              ? "text-bubble-sent-foreground/70"
+                              : "text-muted-foreground",
+                          )}
+                        >
                           {formatTime(m.createdAt)}
                         </span>
                         <StatusIcon status={m.status} own={own} />
@@ -299,8 +362,8 @@ export function ChatView({
                     {own && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
                             className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
@@ -312,17 +375,21 @@ export function ChatView({
                             <Edit3 className="h-4 w-4 mr-2" />
                             Edit
                             {!isFeatureEnabled("messageEdit") && (
-                              <span className="ml-2 text-xs text-muted-foreground">(soon)</span>
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                (soon)
+                              </span>
                             )}
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleDelete(m)}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                             {!isFeatureEnabled("messageDelete") && (
-                              <span className="ml-2 text-xs text-muted-foreground">(soon)</span>
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                (soon)
+                              </span>
                             )}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -340,10 +407,12 @@ export function ChatView({
 
       {/* Message Input */}
       <footer className="flex-shrink-0 p-3 bg-card/80 backdrop-blur-sm">
-        <div className={cn(
-          "flex items-end gap-2 p-2 rounded-2xl bg-secondary/50 transition-all duration-200",
-          isFocused && "ring-2 ring-primary/20 bg-secondary/70"
-        )}>
+        <div
+          className={cn(
+            "flex items-end gap-2 p-2 rounded-2xl bg-secondary/50 transition-all duration-200",
+            isFocused && "ring-2 ring-primary/20 bg-secondary/70",
+          )}
+        >
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}

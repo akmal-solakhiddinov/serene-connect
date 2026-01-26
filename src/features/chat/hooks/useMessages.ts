@@ -9,7 +9,8 @@ export function useMessages(conversationId: string | null) {
     queryFn: async (): Promise<MessageDTO[]> => {
       if (!conversationId) return [];
       const result = await messagesApi.list(conversationId);
-      return Array.isArray(result) ? result : [];
+
+      return Array.isArray(result.messages) ? result.messages : [];
     },
     enabled: !!conversationId,
   });
@@ -21,20 +22,26 @@ export function useSendTextMessage(conversationId: string) {
     mutationFn: async (payload: { content: string }) => {
       return messagesApi.sendText(conversationId, payload);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["messages", conversationId] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["messages", conversationId] }),
   });
 }
 
 export function useEditMessage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { id: string; content: string; conversationId: string }) => {
+    mutationFn: async (payload: {
+      id: string;
+      content: string;
+      conversationId: string;
+    }) => {
       if (!isFeatureEnabled("messageEdit")) {
         throw new Error("FEATURE_NOT_READY");
       }
       return messagesApi.edit(payload.id, { content: payload.content });
     },
-    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
+    onSuccess: (_data, vars) =>
+      qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
   });
 }
 
@@ -47,7 +54,8 @@ export function useDeleteMessage() {
       }
       return messagesApi.remove(payload.id);
     },
-    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
+    onSuccess: (_data, vars) =>
+      qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
   });
 }
 
@@ -57,7 +65,8 @@ export function useMarkMessageSeen() {
     mutationFn: async (payload: { id: string; conversationId: string }) => {
       return messagesApi.markSeen(payload.id);
     },
-    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
+    onSuccess: (_data, vars) =>
+      qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
   });
 }
 

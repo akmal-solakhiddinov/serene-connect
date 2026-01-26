@@ -4,7 +4,6 @@ export interface UserDTO {
   username?: string;
   fullName?: string;
   avatarUrl?: string;
-  isPrivate: boolean;
   isActive: boolean;
 }
 
@@ -22,7 +21,7 @@ export interface MessageDTO {
 export interface ConversationItemDTO {
   id: string;
   user: UserDTO;
-  lastMessage?: MessageDTO;
+  lastMessage?: string;
   unreadCount: number;
-  updatedAt: string;
+  lastMessageTime: string;
 }

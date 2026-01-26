@@ -7,6 +7,7 @@ import {
 } from "react";
 import axios from "axios"; // Import axios to use isAxiosError
 import { api } from "../http/axios";
+import { connectSocket, disconnectSocket } from "../realtime/socket.ts";
 
 interface User {
   id: string;
@@ -52,6 +53,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.addEventListener("auth:logout", handleLogout);
     return () => window.removeEventListener("auth:logout", handleLogout);
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      connectSocket(); // 🔥 cookies already set
+    } else {
+      disconnectSocket();
+    }
+  }, [isAuthenticated]);
 
   const checkAuthStatus = async (): Promise<void> => {
     try {

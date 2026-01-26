@@ -35,7 +35,7 @@ export const useConversation = (
       // Fetch a single conversation
       // Expected shape: { conversation: Conversation }
       const response = await api.get<{ conversation: Conversation }>(
-        `/conversations/${conversationId}`,
+        `/messages/${conversationId}/messages`,
       );
       setConversation(response?.conversation ?? null);
     } catch (err) {
