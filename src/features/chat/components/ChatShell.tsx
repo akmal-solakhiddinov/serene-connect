@@ -23,14 +23,11 @@ export function ChatShell() {
   const [mobileOpenChat, setMobileOpenChat] = useState(!!conversationId);
   const [showFeatureDemo, setShowFeatureDemo] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Initialize socket connection
-  useSocket();
 
   useEffect(() => setMobileOpenChat(!!conversationId), [conversationId]);
 
   const conversations = Array.isArray(data) ? data : [];
-  
+
   const active = useMemo(
     () => conversations.find((c) => c.id === conversationId) ?? null,
     [conversations, conversationId],

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { messagesApi } from "@/api/messages";
 import type { MessageDTO } from "@/types/dtos";
 import { isFeatureEnabled } from "@/lib/featureFlags";
+import { useSocket } from "@/realtime/useSocket";
 
 export function useMessages(conversationId: string | null) {
   return useQuery({
@@ -17,9 +18,21 @@ export function useMessages(conversationId: string | null) {
 }
 
 export function useSendTextMessage(conversationId: string) {
+  const socket = useSocket();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { content: string }) => {
+      socket.emit(
+        "message:send",
+        { ...payload, conversationId },
+        (status: boolean) => {
+          if (!status)
+            console.log(
+              "Something went wrong wile send new message via socket: ",
+              socket,
+            );
+        },
+      );
       return messagesApi.sendText(conversationId, payload);
     },
     onSuccess: () =>
@@ -62,9 +75,7 @@ export function useDeleteMessage() {
 export function useMarkMessageSeen() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { id: string; conversationId: string }) => {
-      return messagesApi.markSeen(payload.id);
-    },
+    mutationFn: async (payload: { id: string; conversationId: string }) => { },
     onSuccess: (_data, vars) =>
       qc.invalidateQueries({ queryKey: ["messages", vars.conversationId] }),
   });
