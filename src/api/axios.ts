@@ -23,8 +23,8 @@ interface QueueItem {
 }
 
 export const axiosInstance: AxiosInstance = axios.create({
-  //baseURL: "https://ws.salohiddinov.tech/api",
-  baseURL: "http://localhost:4000/api",
+  baseURL: "https://ws.salohiddinov.tech/api",
+  // baseURL: "http://localhost:4000/api",
   timeout: 15_000,
   headers: {
     "Content-Type": "application/json",
@@ -53,8 +53,8 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as
       | (InternalAxiosRequestConfig & {
-          _retry?: boolean;
-        })
+        _retry?: boolean;
+      })
       | null;
 
     // 401 → attempt refresh then replay

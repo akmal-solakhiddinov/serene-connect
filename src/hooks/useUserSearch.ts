@@ -10,8 +10,7 @@ interface UseUserSearchResult {
 }
 
 const SEARCH_DELAY = 300;
-
-export const useUserSearch = (): UseUserSearchResult => {
+export const useUserSearch = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,33 +18,26 @@ export const useUserSearch = (): UseUserSearchResult => {
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
-      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
     const timer = setTimeout(async () => {
+      setIsLoading(true);
       try {
         const response = await api.post<UserSearchResult[]>("/user/search", {
           params: { query },
         });
-
-        setResults(response || []);
-      } catch (error) {
-        console.error("Search failed:", error);
+        setResults(response);
+      } catch (err) {
+        console.error("Search failed:", err);
         setResults([]);
       } finally {
         setIsLoading(false);
       }
-    }, SEARCH_DELAY);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
 
-  return {
-    results,
-    isLoading,
-    query,
-    setQuery,
-  };
+  return { query, setQuery, results, isLoading };
 };

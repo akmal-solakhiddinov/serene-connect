@@ -9,6 +9,10 @@ import { ConversationList } from "./ConversationList";
 import { FeatureFlagsCard } from "./FeatureFlagsCard";
 import { FeatureNotReady } from "@/components/ui/FeatureNotReady";
 import type { ConversationItemDTO } from "@/types/dtos";
+import { useUserSearch } from "@/hooks/useUserSearch";
+import axios from "axios";
+import { log } from "console";
+import { conversationsApi } from "@/api/conversations";
 
 function displayName(c: ConversationItemDTO) {
   return c.user.fullName || c.user.username || c.user.email;
@@ -18,10 +22,15 @@ export function ChatShell() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useConversations();
+  const {
+    isLoading: isSearchLoading,
+    query,
+    results: searchResults,
+    setQuery,
+  } = useUserSearch();
 
   const [mobileOpenChat, setMobileOpenChat] = useState(!!conversationId);
   const [showFeatureDemo, setShowFeatureDemo] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => setMobileOpenChat(!!conversationId), [conversationId]);
 
@@ -33,19 +42,28 @@ export function ChatShell() {
   );
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) return conversations;
-    return conversations.filter((c) =>
-      displayName(c).toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [conversations, searchQuery]);
+    if (!query.trim()) return conversations;
+    return searchResults;
+  }, [conversations, searchResults, query]);
 
   const handleFeatureDemo = () => {
     setShowFeatureDemo(true);
     setTimeout(() => setShowFeatureDemo(false), 3000);
   };
 
-  const handleSelectConversation = (id: string) => {
-    navigate(`/chat/${id}`);
+  const handleSelectConversation = async (id: string) => {
+    const existing = conversations.find((c) => c.id === id);
+
+    if (existing) {
+      // Just open it
+      navigate(`/chat/${id}`);
+      setMobileOpenChat(true);
+      return;
+    }
+
+    // Otherwise: id is a userId
+    const convo = await conversationsApi.createWithUser(id);
+    navigate(`/chat/${convo.id}`);
     setMobileOpenChat(true);
   };
 
@@ -71,8 +89,8 @@ export function ChatShell() {
         >
           <SidebarHeader
             conversationCount={conversations.length}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            searchQuery={query}
+            onSearchChange={setQuery}
             onFeatureDemo={handleFeatureDemo}
           />
 
@@ -83,9 +101,9 @@ export function ChatShell() {
             <ConversationList
               conversations={filteredConversations}
               activeId={conversationId}
-              isLoading={isLoading}
+              isLoading={isLoading || isSearchLoading}
               isError={isError}
-              searchQuery={searchQuery}
+              searchQuery={query}
               onSelect={handleSelectConversation}
               onRetry={() => refetch()}
             />

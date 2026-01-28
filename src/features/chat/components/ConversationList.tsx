@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "./Avatar";
 import { cn } from "@/lib/utils";
 import type { ConversationItemDTO } from "@/types/dtos";
+import { UserSearchResult } from "@/types";
 
 function displayName(c: ConversationItemDTO) {
   return c.user.fullName || c.user.username || c.user.email;
 }
 
 interface ConversationListProps {
-  conversations: ConversationItemDTO[];
+  conversations: ConversationItemDTO[] | UserSearchResult[];
   activeId: string | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -90,7 +91,7 @@ export function ConversationList({
             transition={{ delay: index * 0.03 }}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            onClick={() => onSelect(c.id)}
+            onClick={() => onSelect(c.id || c.user.id)}
             className={cn(
               "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
               "hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary/20",
