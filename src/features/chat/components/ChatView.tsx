@@ -47,8 +47,13 @@ function StatusIcon({
 }) {
   if (!own) return null;
   if (status === "seen")
-    return <CheckCheck className="h-3.5 w-3.5 text-primary" />;
-  return <Check className="h-3.5 w-3.5 text-muted-foreground/70" />;
+    return <CheckCheck className="h-3.5 w-3.5 text-primary text-white" />;
+  return (
+    <Check
+      className="h-3.5 w-3.5 text-muted-foreground/70 text-white
+    "
+    />
+  );
 }
 
 function formatTime(iso: string) {
@@ -83,7 +88,7 @@ export function ChatView({
   const socket = useSocket();
   useMessageSocket(conversationId);
   const ordered = useMemo(() => {
-    const all = data ?? [];
+    const all = data?.messages ?? [];
     return [...all].sort(
       (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
     );
@@ -123,7 +128,7 @@ export function ChatView({
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          const id = (entry.target as HTMLElement).dataset.messageId;
+          const id: string = (entry.target as HTMLElement).dataset.messageId;
           const status = (entry.target as HTMLElement).dataset.messageStatus as
             | MessageDTO["status"]
             | undefined;
@@ -131,7 +136,10 @@ export function ChatView({
           if (!id || !status) continue;
           if (senderId === meId) continue;
           if (status === "seen") continue;
-          seenMutation.mutate({ id, conversationId });
+
+          if (status === "unseen") {
+            seenMutation.mutate({ messageId: id, conversationId });
+          }
         }
       },
       { root, threshold: 0.6 },
@@ -254,7 +262,7 @@ export function ChatView({
             {title || "Chat"}
           </p>
           <p className="text-xs text-muted-foreground">
-            {isLoading ? "Loading…" : visible.length > 0 ? "Online" : ""}
+            {isLoading ? "Loading…" : data.user.isActive ? "Online" : "offline"}
           </p>
         </div>
         <Button variant="ghost" size="icon" onClick={handleFeatureNotReady}>

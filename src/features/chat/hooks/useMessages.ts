@@ -1,16 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { messagesApi } from "@/api/messages";
-import type { MessageDTO } from "@/types/dtos";
+import type { MessageDTO, UserDTO } from "@/types/dtos";
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { useSocket } from "@/realtime/useSocket";
+import { getSocket } from "@/realtime/socket";
+import { release } from "os";
+
+// types/chat.ts
+export type MessagesQueryData = {
+  user: UserDTO;
+  messages: MessageDTO[];
+};
 
 export function useMessages(conversationId: string | null) {
   return useQuery({
     queryKey: ["messages", conversationId] as const,
-    queryFn: async (): Promise<MessageDTO[]> => {
-      if (!conversationId) return [];
+    queryFn: async (): Promise<{ user: UserDTO; messages: MessageDTO[] }> => {
+      if (!conversationId) return;
       const result = await messagesApi.list(conversationId);
-      return Array.isArray(result.messages) ? result.messages : [];
+      return result.user ? result : null;
     },
     enabled: !!conversationId,
     refetchOnWindowFocus: false,
@@ -22,32 +30,35 @@ export function useSendTextMessage(conversationId: string) {
   const socket = useSocket();
   const qc = useQueryClient();
 
-  return useMutation({
-    mutationFn: (payload: { content: string }) => {
-      return new Promise<MessageDTO>((resolve, reject) => {
+  return useMutation<MessageDTO, Error, { content: string }>({
+    mutationFn: ({ content }) =>
+      new Promise((resolve, reject) => {
         socket.emit(
           "message:send",
-          { ...payload, conversationId },
-          (status: boolean, msg?: MessageDTO) => {
-            if (status && msg) resolve(msg);
-            else reject(new Error("Failed to send message via socket"));
+          { content, conversationId },
+          (ok: boolean, message?: MessageDTO) => {
+            if (ok && message) resolve(message);
+            else reject(new Error("SEND_FAILED"));
           },
         );
-      });
-    },
+      }),
 
     onSuccess: (message) => {
-      qc.setQueryData<MessageDTO[]>(
+      qc.setQueryData<MessagesQueryData>(
         ["messages", conversationId],
-        (old = []) => {
-          if (old.some((m) => m.id === message.id)) return old;
-          return [...old, message];
+        (old) => {
+          if (!old) return old;
+          if (old.messages.some((m) => m.id === message.id)) return old;
+
+          return {
+            user: old.user,
+            messages: [...old.messages, message],
+          };
         },
       );
     },
   });
 }
-
 export function useEditMessage() {
   const qc = useQueryClient();
   return useMutation({
@@ -81,23 +92,50 @@ export function useDeleteMessage() {
 }
 
 export function useMarkMessageSeen() {
+  const socket = getSocket();
   const qc = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (payload: { id: string; conversationId: string }) => {
-      //return messagesApi.markSeen(payload.id);
+  return useMutation<
+    { messageIds: string[]; conversationId: string }, // ACK result
+    Error,
+    { messageId: string; conversationId: string } // input
+  >({
+    mutationFn: ({ messageId, conversationId }) => {
+      return new Promise((resolve, reject) => {
+        socket.emit(
+          "message:seen",
+          { messageId },
+          (ok: boolean, messageIds?: string[]) => {
+            if (!ok || !messageIds) {
+              reject(new Error("SEEN_FAILED"));
+              return;
+            }
+
+            resolve({ messageIds, conversationId });
+          },
+        );
+      });
     },
 
-    onSuccess: (_data, vars) => {
-      qc.setQueryData<MessageDTO[]>(
-        ["messages", vars.conversationId],
-        (old = []) =>
-          old.map((m) => (m.id === vars.id ? { ...m, status: "seen" } : m)),
+    onSuccess: ({ messageIds, conversationId }) => {
+      qc.setQueryData<MessagesQueryData>(
+        ["messages", conversationId],
+        (old) => {
+          if (!old) return old;
+
+          const seenSet = new Set(messageIds);
+
+          return {
+            user: old.user,
+            messages: old.messages.map((m) =>
+              seenSet.has(m.id) ? { ...m, status: "seen" } : m,
+            ),
+          };
+        },
       );
     },
   });
 }
-
 export function isOwnMessage(message: MessageDTO, currentUserId: string) {
   return message.senderId === currentUserId;
 }

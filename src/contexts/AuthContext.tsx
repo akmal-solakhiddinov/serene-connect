@@ -7,7 +7,11 @@ import {
 } from "react";
 import axios from "axios"; // Import axios to use isAxiosError
 import { api } from "../http/axios";
-import { connectSocket, disconnectSocket } from "../realtime/socket.ts";
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+} from "../realtime/socket.ts";
 
 interface User {
   id: string;
@@ -41,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  const socket = getSocket();
   useEffect(() => {
     checkAuthStatus();
 
@@ -55,12 +59,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      connectSocket(); // 🔥 cookies already set
-    } else {
+    if (!isAuthenticated) return;
+    connectSocket();
+
+    return () => {
       disconnectSocket();
-    }
-  }, [isAuthenticated]);
+    };
+  }, [isAuthenticated, user?.id]);
 
   const checkAuthStatus = async (): Promise<void> => {
     try {
@@ -151,6 +156,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
     }
   };
+
+  socket.emit("user:online", { userId: user.id });
 
   return (
     <AuthContext.Provider

@@ -98,8 +98,13 @@ export function ConversationList({
               isActive && "bg-secondary shadow-sm",
             )}
           >
-            <Avatar name={name} size="sm" />
+            <div className="relative">
+              <Avatar name={name} size="sm" />
 
+              {c.user.isActive && (
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
+              )}
+            </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center justify-between gap-2">
                 <span

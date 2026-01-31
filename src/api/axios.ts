@@ -23,8 +23,8 @@ interface QueueItem {
 }
 
 export const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "https://ws.salohiddinov.tech/api",
-  // baseURL: "http://localhost:4000/api",
+  // baseURL: "https://ws.salohiddinov.tech/api",
+  baseURL: "http://localhost:4000/api",
   timeout: 15_000,
   headers: {
     "Content-Type": "application/json",

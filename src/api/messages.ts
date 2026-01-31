@@ -1,9 +1,11 @@
 import { api, axiosInstance } from "@/api/axios";
-import type { MessageDTO } from "@/types/dtos";
+import type { MessageDTO, UserDTO } from "@/types/dtos";
 
 export const messagesApi = {
   list: (conversationId: string) =>
-    api.get<{ messages: MessageDTO[] }>(`/messages/${conversationId}/messages`),
+    api.get<{ user: UserDTO; messages: MessageDTO[] }>(
+      `/messages/${conversationId}/messages`,
+    ),
 
   sendText: (conversationId: string, payload: { content: string }) =>
     api.post<MessageDTO>(`/messages/${conversationId}/send`, payload),

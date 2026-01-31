@@ -13,6 +13,8 @@ import { useUserSearch } from "@/hooks/useUserSearch";
 import axios from "axios";
 import { log } from "console";
 import { conversationsApi } from "@/api/conversations";
+import { useConversationSocket } from "@/realtime/useConversationsSocket";
+import { useAuth } from "@/contexts/AuthContext";
 
 function displayName(c: ConversationItemDTO) {
   return c.user.fullName || c.user.username || c.user.email;
@@ -28,6 +30,8 @@ export function ChatShell() {
     results: searchResults,
     setQuery,
   } = useUserSearch();
+
+  useConversationSocket();
 
   const [mobileOpenChat, setMobileOpenChat] = useState(!!conversationId);
   const [showFeatureDemo, setShowFeatureDemo] = useState(false);
