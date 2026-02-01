@@ -139,6 +139,7 @@ export function ChatView({
 
           if (status === "unseen") {
             seenMutation.mutate({ messageId: id, conversationId });
+            io.unobserve(entry.target);
           }
         }
       },

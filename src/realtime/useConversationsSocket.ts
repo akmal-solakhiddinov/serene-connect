@@ -10,9 +10,6 @@ export function useConversationSocket(userId?: string) {
     const socket = getSocket();
     if (!socket) return;
 
-    /**
-     * 🆕 Conversation created
-     */
     const onConversationCreated = (conversation: ConversationItemDTO) => {
       queryClient.setQueryData<ConversationItemDTO[]>(
         ["conversations"],
@@ -23,32 +20,22 @@ export function useConversationSocket(userId?: string) {
       );
     };
 
-    /**
-     * ✉️ New message in conversation
-     */
-    socket.on("conversation:updated", (updatedConversation) => {
+    socket.on("conversation:updated", (payload) => {
       queryClient.setQueryData<ConversationItemDTO[]>(
         ["conversations"],
-        (old = []) => {
-          const index = old.findIndex((c) => c.id === updatedConversation.id);
-
-          if (index !== -1) {
-            // ✅ create a new array with updated item
-            return [
-              ...old.slice(0, index),
-              updatedConversation,
-              ...old.slice(index + 1),
-            ];
-          } else {
-            return [updatedConversation, ...old];
-          }
-        },
+        (old = []) =>
+          old.map((c) =>
+            c.id === payload.id
+              ? {
+                ...c,
+                lastMessage: payload.lastMessage,
+                updatedAt: payload.lastMessage.createdAt,
+              }
+              : c,
+          ),
       );
     });
 
-    /**
-     * 👋 Joined conversation (reset unread count)
-     */
     const onConversationJoined = (conversationId: string) => {
       queryClient.setQueryData<ConversationItemDTO[]>(
         ["conversations"],
@@ -59,9 +46,6 @@ export function useConversationSocket(userId?: string) {
       );
     };
 
-    /**
-     * 🗑️ Conversation removed
-     */
     const onConversationRemoved = (conversationId: string) => {
       queryClient.setQueryData<ConversationItemDTO[]>(
         ["conversations"],
@@ -69,13 +53,11 @@ export function useConversationSocket(userId?: string) {
       );
     };
 
-    // 🔌 register listeners
     socket.on("conversation:created", onConversationCreated);
     //   socket.on("conversation:updated", onConversationUpdated);
     socket.on("conversation:joined", onConversationJoined);
     socket.on("conversation:removed", onConversationRemoved);
 
-    // 🧹 cleanup
     return () => {
       socket.off("conversation:created", onConversationCreated);
       //   socket.off("conversation:updated", onConversationUpdated);
