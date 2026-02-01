@@ -16,7 +16,7 @@ export default function LoginPage() {
   if (user) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background px-4">
+    <div className="h-screen-safe w-full flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-md p-6">
         <h1 className="text-xl font-semibold text-foreground">Log in</h1>
         <p className="text-sm text-muted-foreground mt-1">Welcome back.</p>

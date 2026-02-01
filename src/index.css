@@ -169,4 +169,21 @@
     background-color: hsl(var(--muted));
     border-radius: 20px;
   }
+
+  /* Mobile viewport height fix for keyboard */
+  .h-screen-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Word break for long text */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Safe area padding for mobile */
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
 }

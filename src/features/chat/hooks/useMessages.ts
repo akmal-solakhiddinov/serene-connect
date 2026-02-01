@@ -4,7 +4,7 @@ import type { MessageDTO, UserDTO } from "@/types/dtos";
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { useSocket } from "@/realtime/useSocket";
 import { getSocket } from "@/realtime/socket";
-import { release } from "os";
+
 
 // types/chat.ts
 export type MessagesQueryData = {
