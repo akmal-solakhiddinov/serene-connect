@@ -10,8 +10,6 @@ import { FeatureFlagsCard } from "./FeatureFlagsCard";
 import { FeatureNotReady } from "@/components/ui/FeatureNotReady";
 import type { ConversationItemDTO } from "@/types/dtos";
 import { useUserSearch } from "@/hooks/useUserSearch";
-import axios from "axios";
-import { log } from "console";
 import { conversationsApi } from "@/api/conversations";
 import { useConversationSocket } from "@/realtime/useConversationsSocket";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,13 +75,13 @@ export function ChatShell() {
   };
 
   return (
-    <div className="h-screen w-full bg-background">
+    <div className="h-screen-safe w-full bg-background flex flex-col overflow-hidden">
       {/* Feature demo toast */}
       <AnimatePresence>
         {showFeatureDemo && <FeatureNotReady variant="toast" />}
       </AnimatePresence>
 
-      <div className="h-full w-full flex">
+      <div className="flex-1 w-full flex min-h-0">
         {/* Sidebar */}
         <aside
           className={cn(

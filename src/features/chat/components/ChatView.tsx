@@ -47,12 +47,9 @@ function StatusIcon({
 }) {
   if (!own) return null;
   if (status === "seen")
-    return <CheckCheck className="h-3.5 w-3.5 text-primary text-white" />;
+    return <CheckCheck className="h-3.5 w-3.5 text-bubble-sent-foreground/90" />;
   return (
-    <Check
-      className="h-3.5 w-3.5 text-muted-foreground/70 text-white
-    "
-    />
+    <Check className="h-3.5 w-3.5 text-bubble-sent-foreground/70" />
   );
 }
 
@@ -242,7 +239,7 @@ export function ChatView({
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-background">
+    <div className="h-full w-full flex flex-col bg-background overflow-hidden">
       {/* Feature not ready toast */}
       <AnimatePresence>
         {showFeatureToast && <FeatureNotReady variant="toast" />}
@@ -340,20 +337,20 @@ export function ChatView({
                 >
                   <div
                     className={cn(
-                      "flex items-end gap-1 max-w-[78%]",
+                      "flex items-end gap-1 max-w-[85%] sm:max-w-[75%]",
                       own && "flex-row-reverse",
                     )}
                   >
                     <div
                       className={cn(
-                        "rounded-2xl px-4 py-2.5 shadow-sm transition-all",
+                        "rounded-2xl px-4 py-2.5 shadow-sm transition-all min-w-0 overflow-hidden",
                         own
                           ? "bg-bubble-sent text-bubble-sent-foreground rounded-br-md"
                           : "bg-bubble-received text-bubble-received-foreground rounded-bl-md",
                       )}
                     >
                       {m.content ? (
-                        <p className="text-sm whitespace-pre-wrap break-words">
+                        <p className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">
                           {m.content}
                         </p>
                       ) : null}
@@ -429,7 +426,7 @@ export function ChatView({
       <Separator />
 
       {/* Message Input */}
-      <footer className="flex-shrink-0 p-3 bg-card/80 backdrop-blur-sm">
+      <footer className="flex-shrink-0 p-3 pb-safe bg-card/80 backdrop-blur-sm">
         <div
           className={cn(
             "flex items-end gap-2 p-2 rounded-2xl bg-secondary/50 transition-all duration-200",

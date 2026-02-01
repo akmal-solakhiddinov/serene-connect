@@ -7,7 +7,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+      <div className="h-screen-safe w-full flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-full border-b-2 border-primary animate-spin" />
       </div>
     );
