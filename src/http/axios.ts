@@ -11,18 +11,20 @@ interface QueueItem {
   reject: (error: unknown) => void;
 }
 
-// Base configuration
-const axiosInstance: AxiosInstance = axios.create({
-  //baseURL: "https://ws.salohiddinov.tech/api/",
-  baseURL: "http://localhost:4000/api/",
-  timeout: 10000,
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  throw new Error("VITE_API_URL is not defined");
+}
+
+export const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 10_000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Important: sends cookies with requests
-});
-
-// Track if we're currently refreshing to avoid multiple refresh calls
+}); // Track if we're currently refreshing to avoid multiple refresh calls
 let isRefreshing = false;
 let failedQueue: QueueItem[] = [];
 
