@@ -8,11 +8,11 @@ import { SidebarHeader } from "./SidebarHeader";
 import { ConversationList } from "./ConversationList";
 import { FeatureFlagsCard } from "./FeatureFlagsCard";
 import { FeatureNotReady } from "@/components/ui/FeatureNotReady";
+import { ProfilePage } from "./ProfilePage";
 import type { ConversationItemDTO } from "@/types/dtos";
 import { useUserSearch } from "@/hooks/useUserSearch";
 import { conversationsApi } from "@/api/conversations";
 import { useConversationSocket } from "@/realtime/useConversationsSocket";
-import { useAuth } from "@/contexts/AuthContext";
 
 function displayName(c: ConversationItemDTO) {
   return c.user.fullName || c.user.username || c.user.email;
@@ -33,6 +33,7 @@ export function ChatShell() {
 
   const [mobileOpenChat, setMobileOpenChat] = useState(!!conversationId);
   const [showFeatureDemo, setShowFeatureDemo] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => setMobileOpenChat(!!conversationId), [conversationId]);
 
@@ -57,13 +58,11 @@ export function ChatShell() {
     const existing = conversations.find((c) => c.id === id);
 
     if (existing) {
-      // Just open it
       navigate(`/chat/${id}`);
       setMobileOpenChat(true);
       return;
     }
 
-    // Otherwise: id is a userId
     const convo = await conversationsApi.createWithUser(id);
     navigate(`/chat/${convo.id}`);
     setMobileOpenChat(true);
@@ -73,6 +72,11 @@ export function ChatShell() {
     setMobileOpenChat(false);
     navigate("/");
   };
+
+  // Show profile page
+  if (showProfile) {
+    return <ProfilePage onBack={() => setShowProfile(false)} />;
+  }
 
   return (
     <div className="h-screen-safe w-full bg-background flex flex-col overflow-hidden">
@@ -94,6 +98,7 @@ export function ChatShell() {
             searchQuery={query}
             onSearchChange={setQuery}
             onFeatureDemo={handleFeatureDemo}
+            onOpenProfile={() => setShowProfile(true)}
           />
 
           <FeatureFlagsCard />

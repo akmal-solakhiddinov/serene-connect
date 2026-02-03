@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, LogOut, Settings, Sparkles } from "lucide-react";
+import { Search, LogOut, Settings, User } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useAuth } from "@/features/auth/AuthProvider";
 
@@ -8,6 +8,7 @@ interface SidebarHeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onFeatureDemo: () => void;
+  onOpenProfile: () => void;
 }
 
 export function SidebarHeader({
@@ -15,6 +16,7 @@ export function SidebarHeader({
   searchQuery,
   onSearchChange,
   onFeatureDemo,
+  onOpenProfile,
 }: SidebarHeaderProps) {
   const { user: me, logout } = useAuth();
   const displayName = me?.fullName || me?.username || me?.email || "User";
@@ -22,10 +24,13 @@ export function SidebarHeader({
   return (
     <div className="flex-shrink-0 p-4 border-b border-border">
       <div className="flex items-center justify-between mb-4">
-        <motion.div
+        <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onOpenProfile}
+          className="flex items-center gap-3 text-left hover:bg-secondary/50 rounded-xl p-2 -ml-2 transition-colors"
         >
           <Avatar name={displayName} size="md" />
           <div className="min-w-0">
@@ -37,17 +42,17 @@ export function SidebarHeader({
               {conversationCount !== 1 ? "s" : ""}
             </p>
           </div>
-        </motion.div>
+        </motion.button>
 
         <div className="flex items-center gap-1">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={onFeatureDemo}
+            onClick={onOpenProfile}
             className="p-2 rounded-xl hover:bg-secondary transition-colors"
-            title="Feature Demo"
+            title="My Profile"
           >
-            <Sparkles className="w-5 h-5 text-muted-foreground" />
+            <User className="w-5 h-5 text-muted-foreground" />
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
