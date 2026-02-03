@@ -9,7 +9,8 @@ import { ConversationList } from "./ConversationList";
 import { FeatureFlagsCard } from "./FeatureFlagsCard";
 import { FeatureNotReady } from "@/components/ui/FeatureNotReady";
 import { ProfilePage } from "./ProfilePage";
-import type { ConversationItemDTO } from "@/types/dtos";
+import { UserProfilePage } from "./UserProfilePage";
+import type { ConversationItemDTO, UserDTO } from "@/types/dtos";
 import { useUserSearch } from "@/hooks/useUserSearch";
 import { conversationsApi } from "@/api/conversations";
 import { useConversationSocket } from "@/realtime/useConversationsSocket";
@@ -34,6 +35,7 @@ export function ChatShell() {
   const [mobileOpenChat, setMobileOpenChat] = useState(!!conversationId);
   const [showFeatureDemo, setShowFeatureDemo] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [viewingUser, setViewingUser] = useState<UserDTO | null>(null);
 
   useEffect(() => setMobileOpenChat(!!conversationId), [conversationId]);
 
@@ -73,9 +75,23 @@ export function ChatShell() {
     navigate("/");
   };
 
-  // Show profile page
+  // Show my profile page
   if (showProfile) {
     return <ProfilePage onBack={() => setShowProfile(false)} />;
+  }
+
+  // Show other user's profile page
+  if (viewingUser) {
+    return (
+      <UserProfilePage 
+        user={viewingUser} 
+        onBack={() => setViewingUser(null)}
+        onStartChat={() => {
+          handleSelectConversation(viewingUser.id);
+          setViewingUser(null);
+        }}
+      />
+    );
   }
 
   return (
@@ -125,6 +141,7 @@ export function ChatShell() {
             conversationId={conversationId ?? null}
             onBack={handleBack}
             title={active ? displayName(active) : ""}
+            onViewProfile={active ? () => setViewingUser(active.user) : undefined}
           />
         </main>
       </div>

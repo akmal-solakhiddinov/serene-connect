@@ -63,10 +63,12 @@ export function ChatView({
   conversationId,
   title,
   onBack,
+  onViewProfile,
 }: {
   conversationId: string | null;
   title: string;
   onBack: () => void;
+  onViewProfile?: () => void;
 }) {
   const { user } = useAuth();
   const meId = user?.id ?? "";
@@ -255,14 +257,17 @@ export function ChatView({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1 min-w-0">
+        <button 
+          className="flex-1 min-w-0 text-left hover:bg-secondary/50 rounded-lg px-2 py-1 -mx-2 transition-colors"
+          onClick={onViewProfile}
+        >
           <p className="text-sm font-semibold text-foreground truncate">
             {title || "Chat"}
           </p>
           <p className="text-xs text-muted-foreground">
             {isLoading ? "Loading…" : data.user.isActive ? "Online" : "offline"}
           </p>
-        </div>
+        </button>
         <Button variant="ghost" size="icon" onClick={handleFeatureNotReady}>
           <MoreVertical className="h-5 w-5 text-muted-foreground" />
         </Button>
